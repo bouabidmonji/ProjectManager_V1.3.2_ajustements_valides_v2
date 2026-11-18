@@ -27,7 +27,7 @@ app.get('/api/dashboard',authRequired,async(_req,res)=>{try{
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger le tableau de bord.'});}});
 app.get('/api/projects',authRequired,async(req,res)=>{try{
  const search=String(req.query.search||'').trim(),year=req.query.year?Number(req.query.year):null,vals=[],w=[];
- if(search){vals.push('%'+search+'%');w.push('(title ILIKE $'+vals.length+' OR project_code ILIKE $'+vals.length+' OR COALESCE(category,\\'\\') ILIKE $'+vals.length+')');}
+ if(search){vals.push('%'+search+'%');w.push("(title ILIKE $"+vals.length+" OR project_code ILIKE $"+vals.length+" OR COALESCE(category,'') ILIKE $"+vals.length+")");}
  if(year&&Number.isInteger(year)){vals.push(year);w.push('initial_programming_year=$'+vals.length);}
  const q=await pool.query('SELECT id,project_code,title,initial_programming_year,category,updated_cost,legacy_consumed_credits,physical_progress,operational_status,current_stage FROM projects '+(w.length?'WHERE '+w.join(' AND '):'')+' ORDER BY initial_programming_year DESC NULLS LAST,id DESC LIMIT 1000',vals);
  res.json({items:q.rows});
