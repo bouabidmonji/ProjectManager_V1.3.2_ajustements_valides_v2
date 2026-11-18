@@ -14,7 +14,7 @@ Le script PostgreSQL prêt à exécuter est `v2-migration/migration_from_dump.sq
 Ordre impératif dans une base PostgreSQL V2 neuve :
 1. Exécuter `v2-migration/schema.sql`.
 2. Exécuter `v2-migration/migration_from_dump.sql`.
-3. Exécuter `web-v2/schema-auth.sql`.
+3. Exécuter `web-v2/schema-auth.sql`.\n4. Exécuter `web-v2/schema-workspace.sql` pour activer les responsabilités et l'historique.
 
 Le script d'import :
 - reprend les 37 projets et les 3 paramètres présents dans le dump ;
