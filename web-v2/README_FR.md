@@ -35,8 +35,8 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 1. Copier le dossier `web-v2` sur le PC serveur.
 2. Dans PowerShell, ouvrir ce dossier et lancer `npm install`.
 3. Copier `.env.example` vers `.env` et renseigner les variables PostgreSQL et `JWT_SECRET`.
-4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.
-5. Créer le premier administrateur :
+4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.\n5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer les responsabilités et l'historique.
+6. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"
    $env:JWT_SECRET="SECRET_ALEATOIRE_DE_32_CARACTERES_MINIMUM"
@@ -45,16 +45,16 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
    $env:ADMIN_PASSWORD="MOT_DE_PASSE_LONG_ET_UNIQUE"
    npm run admin:create
    ```
-6. Reporter les mêmes paramètres dans le fichier `.env`.
-7. Démarrer le serveur : `npm start`.
-8. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
+7. Reporter les mêmes paramètres dans le fichier `.env`.
+8. Démarrer le serveur : `npm start`.
+9. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
 
 ## Fonctions actuellement présentes dans le socle V2
 - Authentification avec cookie HTTP-only et expiration de session.
 - Contrôle des rôles côté API : administrateur, agent, membre, supervision.
 - Tableau de bord initial et liste/recherche des projets.
 - Création de projet et code annuel automatique.
-- API de consultation et modification des champs principaux.
+- API de consultation et modification des champs principaux.\n- Fiche projet consultable, responsabilités par domaine et historique des affectations.\n- Responsable principal obligatoire à la création d'un projet.
 - Gestion initiale des utilisateurs par API (création réservée à l'administrateur).
 - Journal d'audit minimal.
 - Contrôle de santé de l'API et de la connexion PostgreSQL.
