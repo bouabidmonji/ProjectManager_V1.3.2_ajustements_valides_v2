@@ -42,7 +42,6 @@ const statusMap = v => {
 const json = row => JSON.stringify(row);
 const hasTable = (db, name) => !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name);
 const rowsFrom = (db, name) => hasTable(db, name) ? db.prepare('SELECT * FROM "' + name + '" ORDER BY id').all() : [];
-const value = (row, key) => row[key] === undefined ? null : row[key];
 
 async function main() {
   const source = new Database(sourcePath, { readonly: true, fileMustExist: true });
@@ -113,13 +112,14 @@ async function main() {
       for (const f of followups) {
         const projectId = idMap.get(Number(f.project_id));
         if (!projectId) throw new Error('Follow-up ' + f.id + ' references missing project ' + f.project_id);
+        if (!asDate(f.date_suivi)) throw new Error('Follow-up ' + f.id + ' has no valid date_suivi; import stopped to avoid inventing a date.');
         await client.query(
           `INSERT INTO project_followups
           (legacy_id,project_id,legacy_project_id,followup_date,physical_progress,consumed_credits,current_stage,
            operational_status,blocked_date,blockage_reason,corrective_action,planned_resumption_date,observations,
            legacy_payload,created_at)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-          [f.id,projectId,f.project_id,asDate(f.date_suivi) || '1970-01-01',
+          [f.id,projectId,f.project_id,asDate(f.date_suivi),
            asNullableNumber(f.taux_physique),asNullableNumber(f.credits_consommes),asText(f.etape),
            f.statut_operationnel ? statusMap(f.statut_operationnel) : null,asDate(f.date_blocage),
            asText(f.motif_blocage),asText(f.action_corrective),asDate(f.date_reprise_prevue),
@@ -132,12 +132,13 @@ async function main() {
       for (const p of payments) {
         const projectId = idMap.get(Number(p.project_id));
         if (!projectId) throw new Error('Payment ' + p.id + ' references missing project ' + p.project_id);
+        if (!asDate(p.payment_date)) throw new Error('Payment ' + p.id + ' has no valid payment_date; import stopped to avoid inventing a date.');
         await client.query(
           `INSERT INTO project_payments
           (legacy_id,project_id,legacy_project_id,payment_date,amount,payment_reference,document_type,observation,
            legacy_payload,created_at)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-          [p.id,projectId,p.project_id,asDate(p.payment_date) || '1970-01-01',
+          [p.id,projectId,p.project_id,asDate(p.payment_date),
            Math.max(0,asNumber(p.amount)),asText(p.payment_reference),asText(p.document_type),
            asText(p.observation),json(p),asTimestamp(p.created_at)]
         );
