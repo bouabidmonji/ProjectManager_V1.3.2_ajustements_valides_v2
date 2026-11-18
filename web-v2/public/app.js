@@ -66,7 +66,7 @@ function renderCategoryChart(rows){
 function renderTrend(){
  const years=[...new Set(allProjects.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
  const cats=[...new Set(allProjects.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
- if(trendSelected===null)trendSelected=cats.filter(c=>/infrastructure/i.test(c));
+ if(trendSelected===null)trendSelected=[...cats];
  if(!trendSelected.length&&cats.length)trendSelected=[...cats];
  $('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+(/infrastructure/i.test(c)?'infra':'')+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+( /infrastructure/i.test(c)?'#16877c':palette[i%palette.length])+'"></i>'+esc(c)+'</label>').join('');
  document.querySelectorAll('#trendCategoryFilter input').forEach(el=>el.addEventListener('change',()=>{trendSelected=[...document.querySelectorAll('#trendCategoryFilter input:checked')].map(x=>x.value);drawTrend(years,cats);}));
@@ -106,7 +106,6 @@ function renderAlerts(rows){
  const alerts=[];rows.forEach(p=>{
  if(p.operational_status==='blocked')alerts.push({kind:'danger',title:p.title,label:'Projet bloqué',detail:p.blockage_reason||'Motif de blocage non renseigné'});
  const end=contractEnd(p);if(end&&!['completed','cancelled'].includes(p.operational_status)&&end<new Date(new Date().setHours(0,0,0,0)))alerts.push({kind:'danger',title:p.title,label:'Échéance contractuelle dépassée',detail:'Fin prévue : '+end.toLocaleDateString('fr-FR')});
- if(p.operational_status==='not_started'&&p.programming_date){const days=(Date.now()-new Date(String(p.programming_date).slice(0,10)+'T00:00:00').getTime())/86400000;if(days>90)alerts.push({kind:'warning',title:p.title,label:'Démarrage à examiner',detail:'Projet programmé depuis '+Math.floor(days)+' jours, sans date de démarrage.'});}
  if(p.operational_status==='in_progress'&&!p.last_followup_date)alerts.push({kind:'warning',title:p.title,label:'Suivi à actualiser',detail:'Aucune date de suivi disponible.'});
  });
  $('#alertsList').innerHTML=alerts.length?alerts.slice(0,14).map(a=>'<div class="alert-item '+a.kind+'"><b>'+esc(a.title)+'</b><span>'+esc(a.label)+' — '+esc(a.detail)+'</span></div>').join(''):'<p class="muted">Aucun point de vigilance calculable à partir des dates et statuts renseignés.</p>';
