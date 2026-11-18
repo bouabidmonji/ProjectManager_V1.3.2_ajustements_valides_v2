@@ -22,7 +22,7 @@ app.post('/api/auth/login',async(req,res)=>{try{
 app.post('/api/auth/logout',(req,res)=>{res.clearCookie('pm_session',{httpOnly:true,sameSite:'strict',path:'/'});res.json({ok:true});});
 app.get('/api/auth/me',authRequired,(req,res)=>res.json({user:req.user}));
 app.get('/api/dashboard',authRequired,async(_req,res)=>{try{
- const q=await pool.query("SELECT COUNT(*)::int total,COUNT(*) FILTER(WHERE operational_status='completed')::int completed,COUNT(*) FILTER(WHERE operational_status='in_progress')::int in_progress,COUNT(*) FILTER(WHERE operational_status='blocked')::int blocked,COALESCE(SUM(updated_cost),0)::numeric updated_budget,COALESCE(SUM(legacy_consumed_credits),0)::numeric legacy_consumed FROM projects");
+ const q=await pool.query("SELECT COUNT(*)::int total,COUNT(*) FILTER(WHERE p.operational_status='completed')::int completed,COUNT(*) FILTER(WHERE p.operational_status='in_progress')::int in_progress,COUNT(*) FILTER(WHERE p.operational_status='blocked')::int blocked,COALESCE(SUM(p.updated_cost),0)::numeric updated_budget,COALESCE(SUM(COALESCE(pay.paid_total,p.legacy_consumed_credits)),0)::numeric consumed_credits FROM projects p LEFT JOIN LATERAL (SELECT SUM(amount) AS paid_total FROM project_payments WHERE project_id=p.id) pay ON TRUE");
  res.json(q.rows[0]);
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger le tableau de bord.'});}});
 app.get('/api/projects',authRequired,async(req,res)=>{try{
