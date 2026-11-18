@@ -7,10 +7,14 @@
     "migrate": "node migrate-v1-to-v2.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.8.1",
-    "pg": "^8.13.1"
+    "better-sqlite3": "^11.10.0",
+    "pg": "^8.23.1"
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "main": "migrate-v1-to-v2.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

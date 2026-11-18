@@ -31,8 +31,8 @@ npm install better-sqlite3 pg
 Adapter le chemin de la base et l'adresse PostgreSQL à l'installation réelle :
 
 ```powershell
-$env:SOURCE_SQLITE = "$env:APPDATA\project-manager-tataouine-v1.3\project-manager.sqlite"
-$env:DATABASE_URL = "postgresql://UTILISATEUR:MOT_DE_PASSE@SERVEUR:5432/project_manager_v2"
+$env:SOURCE_SQLITE = "$env:C:\Users\Monji\AppData\Roaming\project-manager-tataouine-v1.3\project-manager.sqlite"
+$env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/project_manager"
 node .\migrate-v1-to-v2.js
 ```
 
