@@ -1,0 +1,7 @@
+PROJECT MANAGER – COMMUNE DE TATAOUINE
+Version : 1.3.0
+Nature : premier lot fonctionnel V1.3 (paiements + tableau de bord)
+Base : sources V1.2 fournies par l'utilisateur
+Date de génération : 10/11/2026
+
+Attention : cette livraison est une version source à tester. Elle ne constitue pas encore la livraison complète de toutes les fonctionnalités prévues pour V1.3.

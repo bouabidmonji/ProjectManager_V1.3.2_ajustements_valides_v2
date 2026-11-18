@@ -1,0 +1,4 @@
+Project Manager - Tataouine
+Version 1.3.2
+Révision tableau de bord financier et clôture
+Date : 16/11/2026

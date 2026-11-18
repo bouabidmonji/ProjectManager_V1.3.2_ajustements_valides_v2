@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="fr">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>
+   Project Manager – Tataouine
+  </title>
+  <link href="style.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <div class="app">
+   <aside class="sidebar">
+    <div class="brand">
+     <div class="brandmark">
+      PM
+     </div>
+     <div>
+      <b>
+       PROJECT MANAGER
+      </b>
+      <small>
+       COMMUNE DE TATAOUINE
+      </small>
+     </div>
+    </div>
+    <nav>
+     <button class="nav active" data-view="dashboard">
+      ▦
+      <span data-i18n="dashboard">
+       Tableau de bord
+      </span>
+     </button>
+     <button class="nav" data-view="projects">
+      ▤
+      <span data-i18n="projects">
+       Projets
+      </span>
+     </button>
+     <button class="nav" data-view="settings">
+      ⚙
+      <span data-i18n="settings">
+       Paramètres &amp; sauvegarde
+      </span>
+     </button>
+    </nav>
+    <div class="sidebottom">
+     <span class="dot">
+     </span>
+     <span data-i18n="local">
+      Données stockées localement
+     </span>
+    </div>
+   </aside>
+   <main>
+    <header>
+     <div>
+      <h1 id="pageTitle">
+       Tableau de bord
+      </h1>
+      <p data-i18n="subtitle">
+       Suivi des investissements communaux
+      </p>
+     </div>
+     <div class="head-actions">
+      <select aria-label="Année du tableau de bord" id="dashboardYear">
+       <option value="">
+        Toutes les années
+       </option>
+      </select>
+      <span class="saved" id="saveState">
+       ● Enregistré
+      </span>
+      <select aria-label="Langue" id="language">
+       <option value="fr">
+        FR
+       </option>
+       <option value="ar">
+        عربي
+       </option>
+      </select>
+      <button class="primary" id="addBtn">
+       ＋ Nouveau projet
+      </button>
+     </div>
+    </header>
+    <section class="view" id="dashboard">
+     <div class="kpis">
+      <article>
+       <span aria-hidden="true" class="kpi-icon kpi-icon-blue">
+        <svg aria-hidden="true" viewbox="0 0 24 24">
+         <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H10l2 2h7.5A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z">
+         </path>
+         <path d="M3 10h18">
+         </path>
+        </svg>
+       </span>
+       <label>
+        Nombre total de projets
+       </label>
+       <strong id="kProjects">
+        0
+       </strong>
+       <small id="kProjectsSub">
+        Toutes années confondues
+       </small>
+      </article>
+      <article>
+       <span aria-hidden="true" class="kpi-icon kpi-icon-teal">
+        <svg aria-hidden="true" viewbox="0 0 24 24">
+         <rect height="14" rx="2" width="18" x="3" y="5">
+         </rect>
+         <path d="M3 10h18M7 15h4">
+         </path>
+        </svg>
+       </span>
+       <label>
+        Taux de consommation des crédits
+       </label>
+       <strong id="kConsumption">
+        0 %
+       </strong>
+       <small id="kConsumptionSub">
+        Paiements / ressources réalisées
+       </small>
+       <div aria-hidden="true" class="kpi-gauge" id="kConsumptionGauge">
+       </div>
+      </article>
+      <article class="kpi-alert">
+       <span aria-hidden="true" class="kpi-icon kpi-icon-red">
+        <svg aria-hidden="true" viewbox="0 0 24 24">
+         <circle cx="12" cy="12" r="9">
+         </circle>
+         <path d="M12 7v5l3 2">
+         </path>
+        </svg>
+       </span>
+       <label>
+        Projets en retard
+       </label>
+       <strong id="kLate">
+        0
+       </strong>
+       <small>
+        Échéance contractuelle dépassée
+       </small>
+      </article>
+      <article>
+       <span aria-hidden="true" class="kpi-icon kpi-icon-green">
+        <svg aria-hidden="true" viewbox="0 0 24 24">
+         <circle cx="12" cy="12" r="9">
+         </circle>
+         <path d="m8 12 2.5 2.5L16 9">
+         </path>
+        </svg>
+       </span>
+       <label>
+        Projets réalisés
+       </label>
+       <strong id="kDone">
+        0
+       </strong>
+       <small id="kDoneSub">
+        Taux de réalisation
+       </small>
+       <div aria-label="Taux de réalisation" class="kpi-progress">
+        <i id="kDoneProgress">
+        </i>
+       </div>
+      </article>
+     </div>
+     <div class="dashgrid">
+      <article class="panel">
+       <div class="panelhead">
+        <h2 data-i18n="yearAnalysis">
+         Répartition par année
+        </h2>
+        <button class="secondary printBtn">
+         Imprimer / PDF
+        </button>
+       </div>
+       <div class="bars" id="yearChart">
+       </div>
+      </article>
+      <article class="panel">
+       <div class="panelhead">
+        <h2 data-i18n="status">
+         État des projets
+        </h2>
+       </div>
+       <div class="statuslist" id="statusList">
+       </div>
+       <div class="chart-inline-detail hidden" id="statusDetail">
+       </div>
+      </article>
+     </div>
+     <div class="dashgrid dashgrid-three">
+      <article class="panel">
+       <div class="panelhead">
+        <h2>
+         Répartition par source de financement
+        </h2>
+       </div>
+       <div class="hbars" id="fundingChart">
+       </div>
+       <div class="chart-inline-detail hidden" id="fundingDetail">
+       </div>
+      </article>
+      <article class="panel">
+       <div class="panelhead">
+        <div>
+         <h2>Crédits alloués et consommés par type de projet (DT)</h2>
+         <p class="muted">Comparaison des deux montants sur la même échelle</p>
+        </div>
+        <button class="secondary printBtn" type="button">Imprimer / PDF</button>
+       </div>
+       <div class="chart-legend-inline" aria-label="Légende du graphique">
+        <span><i class="legend-allocated"></i> Crédits alloués</span>
+        <span><i class="legend-consumed"></i> Crédits consommés</span>
+       </div>
+       <div class="chart-zoom-control">
+        <label for="categoryZoom">Zoom</label>
+        <input id="categoryZoom" type="range" min="100" max="200" step="10" value="100">
+        <output id="categoryZoomValue">100 %</output>
+       </div>
+       <div class="category-chart-viewport">
+        <div class="hbars category-chart-plot" id="categoryChart"></div>
+       </div>
+       <div class="chart-inline-detail hidden" id="categoryDetail"></div>
+      </article>
+     </div>
+     <article class="panel" id="allocationTrendPanel">
+      <div class="panelhead">
+       <div>
+        <h2>Évolution annuelle des crédits alloués par type de projet</h2>
+        <p class="muted">Crédits alloués = coût actualisé des projets, regroupés par année de programmation</p>
+       </div>
+       <button class="secondary printBtn" type="button">Imprimer / PDF</button>
+      </div>
+      <div class="trend-filter-row">
+       <span class="trend-filter-label">Types de projets à afficher</span>
+       <div id="allocationTrendCategoryFilter" class="trend-category-toggles" role="group" aria-label="Sélection multiple des types de projets"></div>
+      </div>
+      <div class="allocation-trend-wrap" id="allocationTrendChart"></div>
+      <p class="chart-hint">Courbe des crédits alloués (coût actualisé) par année de programmation. Survolez un point pour voir le nombre de projets et le montant ; cliquez pour afficher les projets concernés.</p>
+      <div class="chart-inline-detail hidden" id="allocationTrendDetail"></div>
+     </article>
+     <section class="panel" id="completedBalances">
+      <div class="panelhead">
+       <div>
+        <h2>
+         Clôture administrative et situation financière des projets achevés
+        </h2>
+        <p class="muted">
+         Le solde devient un reliquat définitif uniquement après clôture administrative et financière effective.
+        </p>
+       </div>
+       <button class="secondary printBtn" type="button">
+        Imprimer / PDF
+       </button>
+      </div>
+      <div class="kpis balance-kpis">
+       <article class="balance-alert-card">
+        <label>Alertes de clôture définitive dépassées</label>
+        <strong id="balanceOverdueCount">0</strong>
+        <small>Délai de 3 mois dépassé sans clôture effective</small>
+       </article>
+       <article>
+        <label>Solde financier provisoire</label>
+        <strong id="balanceProvisionalTotal">0 DT</strong>
+        <small>Projets achevés non clôturés définitivement</small>
+       </article>
+       <article>
+        <label>Reliquat définitif</label>
+        <strong id="balanceFinalTotal">0 DT</strong>
+        <small>Uniquement les dossiers clôturés définitivement</small>
+       </article>
+      </div>
+      <div class="tablewrap">
+       <table>
+        <thead>
+         <tr>
+          <th>
+           Projet
+          </th>
+          <th>
+           Année
+          </th>
+          <th>
+           Procédure
+          </th>
+          <th>
+           Statut de clôture
+          </th>
+          <th>
+           Coût actualisé
+          </th>
+          <th>
+           Crédits consommés
+          </th>
+          <th>
+           Solde provisoire
+          </th>
+          <th>
+           Reliquat définitif
+          </th>
+         </tr>
+        </thead>
+        <tbody id="completedBalanceRows">
+        </tbody>
+       </table>
+      </div>
+      <div class="tablefoot" id="balanceCountLabel">
+      </div>
+     </section>
+     <article class="panel">
+      <div class="panelhead">
+       <h2 data-i18n="recent">
+        Projets récemment suivis
+       </h2>
+       <button class="link" data-goto="projects" data-i18n="seeAll">
+        Voir tous les projets →
+       </button>
+      </div>
+      <div class="tablewrap">
+       <table>
+        <thead>
+         <tr>
+          <th data-i18n="project">
+           Projet
+          </th>
+          <th data-i18n="year">
+           Année
+          </th>
+          <th data-i18n="category">
+           Catégorie
+          </th>
+          <th data-i18n="cost">
+           Coût actualisé
+          </th>
+          <th data-i18n="physical">
+           Avancement
+          </th>
+          <th>
+           Dernier suivi
+          </th>
+         </tr>
+        </thead>
+        <tbody id="recentRows">
+        </tbody>
+       </table>
+      </div>
+     </article>
+     <article class="panel">
+      <div class="panelhead">
+       <h2>
+        Alertes et points de vigilance
+       </h2>
+       <button class="secondary printBtn">
+        Imprimer / PDF
+       </button>
+      </div>
+      <div class="alertslist" id="alertsList">
+      </div>
+     </article>
+    </section>
+    <section class="view hidden" id="projects">
+     <div class="toolbar">
+      <input id="search" placeholder="Rechercher un projet…"/>
+      <select id="yearFilter">
+       <option value="">
+        Toutes les années
+       </option>
+      </select>
+      <select id="catFilter">
+       <option value="">
+        Toutes les catégories
+       </option>
+      </select>
+      <button class="secondary" id="importBtn">
+       Importer Excel
+      </button>
+      <button class="secondary" id="exportBtn">
+       Exporter Excel
+      </button>
+      <button class="secondary printBtn">
+       Imprimer / PDF
+      </button>
+     </div>
+     <article class="panel">
+      <div class="tablewrap">
+       <table>
+        <thead>
+         <tr>
+          <th>
+           ID
+          </th>
+          <th data-i18n="project">
+           Projet
+          </th>
+          <th data-i18n="year">
+           Année
+          </th>
+          <th data-i18n="category">
+           Catégorie
+          </th>
+          <th data-i18n="cost">
+           Coût actualisé
+          </th>
+          <th data-i18n="spent">
+           Crédits consommés
+          </th>
+          <th data-i18n="physical">
+           Avancement
+          </th>
+          <th>
+           État opérationnel
+          </th>
+          <th>
+           Situation
+          </th>
+          <th data-i18n="stage">
+           Étape
+          </th>
+          <th>
+           Actions
+          </th>
+         </tr>
+        </thead>
+        <tbody id="projectRows">
+        </tbody>
+       </table>
+      </div>
+      <div class="tablefoot" id="countLabel">
+      </div>
+     </article>
+    </section>
+    <section class="view hidden" id="settings">
+     <article class="panel settings">
+      <h2 data-i18n="dataManagement">
+       Gestion des données
+      </h2>
+      <p data-i18n="dataInfo">
+       La base de données est conservée sur cet ordinateur. Créez régulièrement une sauvegarde sur un autre support.
+      </p>
+      <div class="settingrow">
+       <div>
+        <b data-i18n="backup">
+         Sauvegarde manuelle
+        </b>
+        <small data-i18n="backupDesc">
+         Créer une copie complète de la base SQLite.
+        </small>
+       </div>
+       <button class="primary" data-i18n="createBackup" id="backupBtn">
+        Créer une sauvegarde
+       </button>
+      </div>
+      <div class="settingrow">
+       <div>
+        <b data-i18n="restore">
+         Restaurer une sauvegarde
+        </b>
+        <small data-i18n="restoreDesc">
+         Remplacer la base actuelle par une sauvegarde existante.
+        </small>
+       </div>
+       <button class="secondary" data-i18n="restoreBtn" id="restoreBtn">
+        Restaurer
+       </button>
+      </div>
+      <div class="settingrow">
+       <div>
+        <b data-i18n="excel">
+         Échange Excel
+        </b>
+        <small data-i18n="excelDesc">
+         Importer des lignes ou exporter tous les projets.
+        </small>
+       </div>
+       <div>
+        <button class="secondary" id="settingsImport">
+         Importer
+        </button>
+        <button class="secondary" id="settingsExport">
+         Exporter
+        </button>
+       </div>
+      </div>
+      <h3>
+       Seuils de vigilance (jours)
+      </h3>
+      <div class="thresholds">
+       <label>
+        Projet non démarré après programmation
+        <input id="thresholdStart" max="3650" min="1" type="number"/>
+       </label>
+       <label>
+        Projet en cours sans actualisation
+        <input id="thresholdInactive" max="3650" min="1" type="number"/>
+       </label>
+       <label>
+        Échéance contractuelle proche
+        <input id="thresholdDue" max="3650" min="1" type="number"/>
+       </label>
+       <button class="primary" id="saveThresholds">
+        Enregistrer les seuils
+       </button>
+      </div>
+      <p class="notice" data-i18n="backupWarning">
+       Important : conservez les sauvegardes sur un disque externe ou un espace sécurisé. La sauvegarde automatique quotidienne sera activée dans une prochaine étape.
+      </p>
+     </article>
+    </section>
+   </main>
+  </div>
+  <!-- V1.3.1 : panneau de détails interactifs -->
+  <!-- Fin V1.3.1 -->
+  <!-- V1.3.2 : Reliquats des projets achevés -->
+  <!-- Fin V1.3.2 -->
+  <div class="modal hidden" id="modal">
+   <div class="dialog">
+    <div class="dialoghead">
+     <div>
+      <h2 id="formTitle">
+       Nouveau projet
+      </h2>
+      <p data-i18n="formHint">
+       Les modifications sont enregistrées dans la base locale.
+      </p>
+     </div>
+     <button class="close" id="closeModal">
+      ×
+     </button>
+    </div>
+    <form id="projectForm">
+     <input name="id" type="hidden"/>
+     <div class="formgrid">
+      <label class="wide">
+       <span data-i18n="projectName">
+        Intitulé du projet *
+       </span>
+       <input name="intitule" required=""/>
+      </label>
+      <label>
+       <span data-i18n="year">
+        Année
+       </span>
+       <input max="2100" min="2000" name="annee" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="category">
+        Catégorie
+       </span>
+       <select name="categorie">
+        <option>
+         Infrastructure
+        </option>
+        <option>
+         Batiments
+        </option>
+        <option>
+         Embellissement
+        </option>
+        <option>
+         Materiels
+        </option>
+        <option>
+         Etudes
+        </option>
+        <option>
+         Divers
+        </option>
+        <option>
+         Acquisition_terrains
+        </option>
+       </select>
+      </label>
+      <label>
+       <span data-i18n="subcategory">
+        Sous-catégorie
+       </span>
+       <input name="sous_categorie"/>
+      </label>
+      <label>
+       <span data-i18n="initialCost">
+        Coût initial (DT)
+       </span>
+       <input min="0" name="cout_initial" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="updatedCost">
+        Coût actualisé (DT)
+       </span>
+       <input min="0" name="cout_actualise" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="ownFunding">
+        Autofinancement
+       </span>
+       <input min="0" name="autofinancement" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="loan">
+        Emprunt
+       </span>
+       <input min="0" name="emprunt" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="exceptionalAid">
+        Aide exceptionnelle
+       </span>
+       <input min="0" name="aide_exceptionnelle" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="unassignedAid">
+        Aide non affectée
+       </span>
+       <input min="0" name="aide_non_affectee" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="assignedAid">
+        Aide affectée
+       </span>
+       <input min="0" name="aide_affectee" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="otherSources">
+        Autres sources
+       </span>
+       <input min="0" name="autres_sources" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="resources">
+        Ressources réalisées
+       </span>
+       <input min="0" name="ressources_realisees" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="consumed">
+        Crédits consommés
+       </span>
+       <input min="0" name="credits_consommes" step="0.001" type="number"/>
+      </label>
+      <label>
+       <span>
+        Date de programmation
+       </span>
+       <input name="date_programmation" type="date"/>
+      </label>
+      <label>
+       <span data-i18n="startDate">
+        Date début travaux
+       </span>
+       <input name="date_debut" type="date"/>
+      </label>
+      <label>
+       <span data-i18n="duration">
+        Durée contractuelle (mois)
+       </span>
+       <input min="0" name="duree_mois" type="number"/>
+      </label>
+      <label>
+       <span data-i18n="physicalRate">
+        Taux de réalisation (%)
+       </span>
+       <input max="100" min="0" name="taux_physique" step="0.01" type="number"/>
+      </label>
+      <label class="wide">
+       <span data-i18n="stage">
+        Étape actuelle
+       </span>
+       <select name="etape">
+        <option value="">
+         —
+        </option>
+        <option>
+         في طور الدراسات
+        </option>
+        <option>
+         في طور الإستشارة أو طلب عروض أو فرز العروض أو ابرام الصفقة
+        </option>
+        <option>
+         في طور الإنجاز
+        </option>
+        <option>
+         تمّ الإنجاز
+        </option>
+        <option>
+         مشروع مؤجّل
+        </option>
+        <option>
+         مشروع ملغى
+        </option>
+        <option>
+         مشروع معطل
+        </option>
+       </select>
+      </label>
+      <label>
+       <span>
+        État opérationnel
+       </span>
+       <select name="statut_operationnel">
+        <option value="non_demarre">
+         Non démarré
+        </option>
+        <option value="en_cours">
+         En cours
+        </option>
+        <option value="suspendu">
+         Bloqué / suspendu
+        </option>
+        <option value="acheve">
+         Achevé
+        </option>
+        <option value="annule">
+         Annulé
+        </option>
+       </select>
+      </label>
+      <!-- V1.3.2 : Procédure et clôture administrative -->
+      <div class="wide">
+       <h3>
+        Procédure et clôture administrative et financière
+       </h3>
+      </div>
+      <label>
+       <span>
+        Type de procédure
+       </span>
+       <select id="procedureType" name="type_procedure">
+        <option value="">
+         — Non renseigné —
+        </option>
+        <option value="marche">
+         Marché
+        </option>
+        <option value="consultation">
+         Consultation
+        </option>
+       </select>
+      </label>
+      <label>
+       <span>
+        Date de réception provisoire
+       </span>
+       <input name="date_reception_provisoire" type="date"/>
+      </label>
+      <label>
+       <span>
+        Durée de garantie (mois)
+       </span>
+       <input id="warrantyDuration" min="0" name="duree_garantie_mois" step="1" type="number" value="12"/>
+       <small class="field-hint">
+        Marché : 12 mois par défaut. Consultation : 0 si aucune garantie ; adapter si une garantie est prévue.
+       </small>
+      </label>
+      <label>
+       <span>
+        Date de réception définitive
+       </span>
+       <input name="date_reception_definitive" type="date"/>
+      </label>
+      <label>
+       <span>
+        Date du règlement définitif
+       </span>
+       <input name="date_reglement_definitif" type="date"/>
+      </label>
+      <label>
+       <span>
+        Date de clôture effective
+       </span>
+       <input name="date_cloture" type="date"/>
+      </label>
+      <!-- Fin V1.3.2 -->
+      <label>
+       <span>
+        Date du blocage
+       </span>
+       <input name="date_blocage" type="date"/>
+      </label>
+      <label>
+       <span>
+        Motif du blocage
+       </span>
+       <select name="motif_blocage">
+        <option value="">
+         —
+        </option>
+        <option>
+         Problème foncier
+        </option>
+        <option>
+         Études techniques
+        </option>
+        <option>
+         Procédure de marché
+        </option>
+        <option>
+         Crédits indisponibles
+        </option>
+        <option>
+         Difficultés avec l'entreprise
+        </option>
+        <option>
+         Réseaux concessionnaires
+        </option>
+        <option>
+         Difficultés administratives
+        </option>
+        <option>
+         Opposition / riverains
+        </option>
+        <option>
+         Autre
+        </option>
+       </select>
+      </label>
+      <label>
+       <span>
+        Date prévisionnelle de reprise
+       </span>
+       <input name="date_reprise_prevue" type="date"/>
+      </label>
+      <label class="wide">
+       <span>
+        Mesure corrective / action envisagée
+       </span>
+       <textarea name="action_corrective" rows="2"></textarea>
+      </label>
+      <label>
+       <span>
+        Dernière actualisation
+       </span>
+       <input name="derniere_actualisation" type="date"/>
+      </label>
+      <label class="wide">
+       <span data-i18n="observations">
+        Observations
+       </span>
+       <textarea name="observations" rows="3"></textarea>
+      </label>
+     </div>
+     <div class="formfooter">
+      <span id="formMessage">
+      </span>
+      <button class="secondary" data-i18n="cancel" id="cancelForm" type="button">
+       Annuler
+      </button>
+      <button class="primary" data-i18n="save" type="submit">
+       Enregistrer
+      </button>
+     </div>
+    </form>
+   </div>
+  </div>
+  <div class="modal hidden" id="detailModal">
+   <div class="dialog detail-dialog">
+    <div class="dialoghead">
+     <div>
+      <h2 id="detailTitle">
+       Fiche projet
+      </h2>
+      <p id="detailSubtitle">
+      </p>
+     </div>
+     <button class="close" id="closeDetail">
+      ×
+     </button>
+    </div>
+    <div id="detailContent">
+    </div>
+   </div>
+  </div>
+  <div class="dashboard-tooltip hidden" id="dashboardTooltip" role="status" aria-live="polite"></div>
+  <div class="toast" id="toast">
+  </div>
+  <script src="renderer.js">
+  </script>
+ </body>
+</html>
