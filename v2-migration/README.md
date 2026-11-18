@@ -21,6 +21,7 @@ Le script d'import :
 - conserve l'identifiant SQLite dans `legacy_id` et comme identifiant interne initial ;
 - attribue un code immuable `PM-AAAA-NNNN` par année de programmation ;
 - convertit les statuts opérationnels en valeurs normalisées V2 ;
+- renseigne `current_programming_year` avec `annee`, car V1.3.2 ne contient qu'un seul champ d'année ;
 - conserve la ligne source complète dans `legacy_payload` ;
 - s'arrête si la table cible `projects` contient déjà des lignes ;
 - vérifie que 37 projets ont été importés et annule la transaction si le contrôle échoue.
