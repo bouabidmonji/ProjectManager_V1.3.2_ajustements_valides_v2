@@ -14,7 +14,8 @@ Le script PostgreSQL prêt à exécuter est `v2-migration/migration_from_dump.sq
 Ordre impératif dans une base PostgreSQL V2 neuve :
 1. Exécuter `v2-migration/schema.sql`.
 2. Exécuter `v2-migration/migration_from_dump.sql`.
-3. Exécuter `web-v2/schema-auth.sql`.\n4. Exécuter `web-v2/schema-workspace.sql` pour activer les responsabilités et l'historique.
+3. Exécuter `web-v2/schema-auth.sql`.
+4. Exécuter `web-v2/schema-workspace.sql` pour activer les responsabilités et l'historique.
 
 Le script d'import :
 - reprend les 37 projets et les 3 paramètres présents dans le dump ;
@@ -35,7 +36,8 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 1. Copier le dossier `web-v2` sur le PC serveur.
 2. Dans PowerShell, ouvrir ce dossier et lancer `npm install`.
 3. Copier `.env.example` vers `.env` et renseigner les variables PostgreSQL et `JWT_SECRET`.
-4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.\n5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer les responsabilités et l'historique.
+4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.
+5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer les responsabilités et l'historique.
 6. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"
@@ -54,7 +56,9 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 - Contrôle des rôles côté API : administrateur, agent, membre, supervision.
 - Tableau de bord initial et liste/recherche des projets.
 - Création de projet et code annuel automatique.
-- API de consultation et modification des champs principaux.\n- Fiche projet consultable, responsabilités par domaine et historique des affectations.\n- Responsable principal obligatoire à la création d'un projet.
+- API de consultation et modification des champs principaux.
+- Fiche projet consultable, responsabilités par domaine et historique des affectations.
+- Responsable principal obligatoire à la création d'un projet.
 - Gestion initiale des utilisateurs par API (création réservée à l'administrateur).
 - Journal d'audit minimal.
 - Contrôle de santé de l'API et de la connexion PostgreSQL.
