@@ -1,0 +1,16 @@
+{
+  "name": "project-manager-v2-migration",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Migration sécurisée de la base SQLite V1.3.2 vers PostgreSQL V2",
+  "scripts": {
+    "migrate": "node migrate-v1-to-v2.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "pg": "^8.13.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
