@@ -22,8 +22,23 @@ app.post('/api/auth/login',async(req,res)=>{try{
 app.post('/api/auth/logout',(req,res)=>{res.clearCookie('pm_session',{httpOnly:true,sameSite:'strict',path:'/'});res.json({ok:true});});
 app.get('/api/auth/me',authRequired,(req,res)=>res.json({user:req.user}));
 app.get('/api/dashboard',authRequired,async(_req,res)=>{try{
- const q=await pool.query("SELECT COUNT(*)::int total,COUNT(*) FILTER(WHERE p.operational_status='completed')::int completed,COUNT(*) FILTER(WHERE p.operational_status='in_progress')::int in_progress,COUNT(*) FILTER(WHERE p.operational_status='blocked')::int blocked,COALESCE(SUM(p.updated_cost),0)::numeric updated_budget,COALESCE(SUM(COALESCE(pay.paid_total,p.legacy_consumed_credits)),0)::numeric consumed_credits FROM projects p LEFT JOIN LATERAL (SELECT SUM(amount) AS paid_total FROM project_payments WHERE project_id=p.id) pay ON TRUE");
- res.json(q.rows[0]);
+ const q=await pool.query(`SELECT p.id,p.project_code,p.title,p.initial_programming_year,p.current_programming_year,p.category,p.subcategory,
+ p.initial_cost,p.updated_cost,p.self_funding,p.loan,p.exceptional_aid,p.unassigned_aid,p.assigned_aid,p.other_funding,
+ p.realized_resources,COALESCE(pay.paid_total,p.legacy_consumed_credits,0)::numeric consumed_credits,
+ p.physical_progress,p.operational_status,p.current_stage,p.programming_date,p.start_date,p.duration_months,
+ p.blocked_date,p.blockage_reason,p.corrective_action,p.planned_resumption_date,p.last_update_date,
+ p.procedure_type,p.provisional_reception_date,p.warranty_months,p.definitive_reception_date,p.final_payment_date,p.closure_date,
+ COALESCE(f.last_followup_date,p.last_update_date) last_followup_date
+ FROM projects p
+ LEFT JOIN LATERAL (SELECT SUM(amount) paid_total FROM project_payments WHERE project_id=p.id) pay ON TRUE
+ LEFT JOIN LATERAL (SELECT MAX(followup_date) last_followup_date FROM project_followups WHERE project_id=p.id) f ON TRUE
+ ORDER BY p.initial_programming_year NULLS LAST,p.project_code`);
+ const items=q.rows;
+ const total=items.length, sum=k=>items.reduce((a,p)=>a+Number(p[k]||0),0);
+ res.json({items,summary:{total,completed:items.filter(p=>p.operational_status==='completed').length,
+ in_progress:items.filter(p=>p.operational_status==='in_progress').length,blocked:items.filter(p=>p.operational_status==='blocked').length,
+ not_started:items.filter(p=>p.operational_status==='not_started').length,cancelled:items.filter(p=>p.operational_status==='cancelled').length,
+ updated_budget:sum('updated_cost'),consumed_credits:sum('consumed_credits'),realized_resources:sum('realized_resources')}});
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger le tableau de bord.'});}});
 app.get('/api/projects',authRequired,async(req,res)=>{try{
  const search=String(req.query.search||'').trim(),year=req.query.year?Number(req.query.year):null,vals=[],w=[];
