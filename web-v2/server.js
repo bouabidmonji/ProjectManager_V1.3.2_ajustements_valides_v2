@@ -32,14 +32,35 @@ app.get('/api/projects',authRequired,async(req,res)=>{try{
  const q=await pool.query('SELECT id,project_code,title,initial_programming_year,category,updated_cost,legacy_consumed_credits,physical_progress,operational_status,current_stage FROM projects '+(w.length?'WHERE '+w.join(' AND '):'')+' ORDER BY initial_programming_year DESC NULLS LAST,id DESC LIMIT 1000',vals);
  res.json({items:q.rows});
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger les projets.'});}});
-app.get('/api/projects/:id',authRequired,async(req,res)=>{const q=await pool.query('SELECT * FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!q.rowCount)return res.status(404).json({error:'Projet introuvable.'});res.json(q.rows[0]);});
-app.post('/api/projects',authRequired,allow('admin','agent'),async(req,res)=>{const b=req.body||{};if(!String(b.title||'').trim())return res.status(400).json({error:'L’intitulé est obligatoire.'});const c=await pool.connect();try{
+app.get('/api/assignees',authRequired,async(_req,res)=>{const q=await pool.query("SELECT id,display_name,role FROM app_users WHERE is_active=TRUE ORDER BY display_name");res.json({items:q.rows});});
+app.get('/api/projects/:id',authRequired,async(req,res)=>{try{
+ const q=await pool.query('SELECT * FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!q.rowCount)return res.status(404).json({error:'Projet introuvable.'});
+ const p=q.rows[0];
+ const [r,h]=await Promise.all([
+  pool.query("SELECT pr.id,pr.responsibility_role,pr.user_id,u.display_name,u.username,pr.assigned_at FROM project_responsibilities pr JOIN app_users u ON u.id=pr.user_id WHERE pr.project_id=$1 AND pr.active=TRUE ORDER BY CASE pr.responsibility_role WHEN 'principal' THEN 0 ELSE 1 END,pr.responsibility_role,u.display_name",[p.id]),
+  pool.query("SELECT h.id,h.event_type,h.summary,h.before_data,h.after_data,h.created_at,u.display_name FROM project_history h LEFT JOIN app_users u ON u.id=h.user_id WHERE h.project_id=$1 ORDER BY h.created_at DESC LIMIT 100",[p.id])
+ ]);
+ res.json({...p,responsibilities:r.rows,history:h.rows});
+ }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger la fiche projet.'});}});
+app.put('/api/projects/:id/responsibilities',authRequired,allow('admin','agent'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
+ await c.query('BEGIN');const p=await c.query('SELECT id FROM projects WHERE id=$1',[req.params.id]);if(!p.rowCount){await c.query('ROLLBACK');return res.status(404).json({error:'Projet introuvable.'});}
+ const u=await c.query('SELECT id FROM app_users WHERE id=$1 AND is_active=TRUE',[userId]);if(!u.rowCount){await c.query('ROLLBACK');return res.status(400).json({error:'Utilisateur absent ou inactif.'});}
+ const prior=await c.query('SELECT user_id FROM project_responsibilities WHERE project_id=$1 AND responsibility_role=$2 AND active=TRUE',[p.rows[0].id,role]);
+ await c.query('UPDATE project_responsibilities SET active=FALSE,ended_at=now() WHERE project_id=$1 AND responsibility_role=$2 AND active=TRUE',[p.rows[0].id,role]);
+ await c.query('INSERT INTO project_responsibilities(project_id,user_id,responsibility_role,assigned_by) VALUES($1,$2,$3,$4)',[p.rows[0].id,userId,role,req.user.id]);
+ await c.query("INSERT INTO project_history(project_id,user_id,event_type,summary,before_data,after_data) VALUES($1,$2,'responsibility_changed',$3,$4,$5)",[p.rows[0].id,req.user.id,'Affectation '+role+' modifiée',JSON.stringify({user_id:prior.rows[0]?.user_id||null}),JSON.stringify({user_id:userId,role})]);
+ await c.query('COMMIT');res.json({ok:true});
+ }catch(e){await c.query('ROLLBACK');console.error(e);res.status(500).json({error:'Impossible de modifier les responsabilités.'});}finally{c.release();}});
+app.post('/api/projects',authRequired,allow('admin','agent'),async(req,res)=>{const b=req.body||{};if(!String(b.title||'').trim())return res.status(400).json({error:'L’intitulé est obligatoire.'});if(!Number.isInteger(Number(b.principal_user_id)))return res.status(400).json({error:'Un responsable principal est obligatoire.'});const c=await pool.connect();try{
  await c.query('BEGIN');const temp='PENDING-'+randomUUID(),year=Number(b.year)||new Date().getFullYear();
  await c.query("SELECT pg_advisory_xact_lock(hashtext('pm-project-code-' || $1::text))",[year]);
  const seq=await c.query("SELECT COALESCE(MAX(RIGHT(project_code,4)::int),0)+1 AS n FROM projects WHERE project_code LIKE $1",['PM-'+year+'-%']);
  const q=await c.query("INSERT INTO projects(project_code,title,initial_programming_year,current_programming_year,category,subcategory,updated_cost,operational_status,current_stage,observations) VALUES($1,$2,$3,$3,$4,$5,$6,$7,$8,$9) RETURNING id",[temp,String(b.title).trim(),year,b.category||null,b.subcategory||null,Number(b.updated_cost)||0,b.status||'not_started',b.stage||null,b.observations||null]);
  const id=q.rows[0].id,code='PM-'+String(year).padStart(4,'0')+'-'+String(seq.rows[0].n).padStart(4,'0');
  await c.query('UPDATE projects SET project_code=$1 WHERE id=$2',[code,id]);
+ const principal=await c.query('SELECT id FROM app_users WHERE id=$1 AND is_active=TRUE',[Number(b.principal_user_id)]);if(!principal.rowCount)throw new Error('Le responsable principal est introuvable ou inactif.');
+ await c.query("INSERT INTO project_responsibilities(project_id,user_id,responsibility_role,assigned_by) VALUES($1,$2,'principal',$3)",[id,Number(b.principal_user_id),req.user.id]);
+ await c.query("INSERT INTO project_history(project_id,user_id,event_type,summary,after_data) VALUES($1,$2,'created','Création du projet',$3)",[id,req.user.id,JSON.stringify({project_code:code,title:String(b.title).trim()})]);
  await c.query("INSERT INTO audit_logs(user_id,action,entity_type,entity_id,details) VALUES($1,'create','project',$2,$3)",[req.user.id,String(id),JSON.stringify({project_code:code})]);
  await c.query('COMMIT');res.status(201).json({id,project_code:code});
  }catch(e){await c.query('ROLLBACK');console.error(e);res.status(500).json({error:'Création impossible.'});}finally{c.release();}});
