@@ -28,18 +28,18 @@ app.get('/api/dashboard',authRequired,async(_req,res)=>{try{
  p.physical_progress,p.operational_status,p.current_stage,p.programming_date,p.start_date,p.duration_months,
  p.blocked_date,p.blockage_reason,p.corrective_action,p.planned_resumption_date,p.last_update_date,
  COALESCE(p.procedure_type,p.legacy_payload->>'type_procedure') procedure_type,
- COALESCE(p.provisional_reception_date,(p.legacy_payload->>'date_reception_provisoire')::date) provisional_reception_date,
+ COALESCE(p.provisional_reception_date,NULLIF(p.legacy_payload->>'date_reception_provisoire','')::date) provisional_reception_date,
  COALESCE(p.warranty_months,NULLIF(p.legacy_payload->>'duree_garantie_mois','')::int) warranty_months,
- COALESCE(p.definitive_reception_date,(p.legacy_payload->>'date_reception_definitive')::date) definitive_reception_date,
- COALESCE(p.final_payment_date,(p.legacy_payload->>'date_reglement_definitif')::date) final_payment_date,
- COALESCE(p.closure_date,(p.legacy_payload->>'date_cloture')::date) closure_date,
+ COALESCE(p.definitive_reception_date,NULLIF(p.legacy_payload->>'date_reception_definitive','')::date) definitive_reception_date,
+ COALESCE(p.final_payment_date,NULLIF(p.legacy_payload->>'date_reglement_definitif','')::date) final_payment_date,
+ COALESCE(p.closure_date,NULLIF(p.legacy_payload->>'date_cloture','')::date) closure_date,
  COALESCE(f.last_followup_date,p.last_update_date) last_followup_date
  FROM projects p
  LEFT JOIN LATERAL (SELECT SUM(amount) paid_total FROM project_payments WHERE project_id=p.id) pay ON TRUE
  LEFT JOIN LATERAL (SELECT MAX(followup_date) last_followup_date FROM project_followups WHERE project_id=p.id) f ON TRUE
  ORDER BY p.initial_programming_year NULLS LAST,p.project_code`);
  const items=q.rows.map(p=>{const paid=Number(p.consumed_credits||0),cost=Number(p.updated_cost||0),done=p.operational_status==='completed',closed=!!p.closure_date&&!!p.final_payment_date;
- const provisional=done&&!closed?cost-paid:0,final=done&&closed?cost-paid:0;
+ const provisional=done&&!closed?cost-paid:0,final=done&&closed?Number(p.realized_resources||0)-paid:0;
  return {...p,provisional_balance:provisional,final_residual:final,financially_closed:closed};});
  const total=items.length,sum=k=>items.reduce((a,p)=>a+Number(p[k]||0),0);
  res.json({items,summary:{total,completed:items.filter(p=>p.operational_status==='completed').length,blocked:items.filter(p=>p.operational_status==='blocked').length,updated_budget:sum('updated_cost'),consumed_credits:sum('consumed_credits'),realized_resources:sum('realized_resources'),provisional_balance:sum('provisional_balance'),final_residual:sum('final_residual')}});
@@ -65,7 +65,7 @@ app.get('/api/projects/:id',authRequired,async(req,res)=>{try{
  ]);
  res.json({...p,responsibilities:r.rows,history:h.rows,payments:payments.rows,followups:followups.rows,payments_total:payments.rows.reduce((a,x)=>a+Number(x.amount||0),0),has_payment_history:payments.rowCount>0});
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger la fiche projet.'});}});
-app.put('/api/projects/:id/responsibilities',authRequired,allow('admin','agent'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
+app.put('/api/projects/:id/responsibilities',authRequired,allow('admin'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
  await c.query('BEGIN');const p=await c.query('SELECT id FROM projects WHERE id=$1',[req.params.id]);if(!p.rowCount){await c.query('ROLLBACK');return res.status(404).json({error:'Projet introuvable.'});}
  const u=await c.query('SELECT id FROM app_users WHERE id=$1 AND is_active=TRUE',[userId]);if(!u.rowCount){await c.query('ROLLBACK');return res.status(400).json({error:'Utilisateur absent ou inactif.'});}
  const prior=await c.query('SELECT user_id FROM project_responsibilities WHERE project_id=$1 AND responsibility_role=$2 AND active=TRUE',[p.rows[0].id,role]);
