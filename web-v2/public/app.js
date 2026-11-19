@@ -17,20 +17,21 @@ function applyLanguage(lang){
  currentLang=lang==='ar'?'ar':'fr';const ar=currentLang==='ar',t=translations[currentLang];
  document.documentElement.lang=currentLang;document.documentElement.dir=ar?'rtl':'ltr';document.body.classList.toggle('rtl',ar);
  const set=(sel,value)=>{const el=$(sel);if(el)el.textContent=value;};
- set('#pageTitle',t.dashboard);set('#languageCaption',t.language);
  const navs=document.querySelectorAll('.nav');if(navs[0])navs[0].textContent=t.dashboard;if(navs[1])navs[1].textContent=t.projects;if(navs[2])navs[2].textContent=t.users;
- set('#logoutBtn',t.logout);set('#kTotalLabel',t.total);set('#kConsumptionLabel',t.consumption);
- const headings=[...document.querySelectorAll('#dashboardPage h2')];
- const headingMap=[t.year,t.status,t.funding,t.category,t.balance,t.recent,t.alerts];
- headings.forEach((el,i)=>{if(headingMap[i])el.textContent=headingMap[i];});
+ set('#languageCaption',t.language);set('#logoutBtn',t.logout);
+ const headings=[...document.querySelectorAll('#dashboardPage h2')],headingMap=[t.year,t.status,t.funding,t.category,t.balance,t.recent,t.alerts];headings.forEach((el,i)=>{if(headingMap[i])el.textContent=headingMap[i];});
  const labels=[...document.querySelectorAll('.kpi-label')],values=[t.total,t.consumption,t.late,t.done,t.blocked,t.provisional,t.final];labels.forEach((el,i)=>{if(values[i])el.textContent=values[i];});
  const search=$('#projectSearch');if(search)search.placeholder=t.search;
- const year=$('#yearSearch'),state=$('#statusSearch'),cat=$('#categorySearch');
- if(year&&year.options[0])year.options[0].textContent=t.allYears;if(state&&state.options[0])state.options[0].textContent=t.allStates;if(cat&&cat.options[0])cat.options[0].textContent=t.allCategories;
+ const year=$('#yearSearch'),state=$('#statusSearch'),cat=$('#categorySearch'),dashYear=$('#dashboardYear');
+ if(year&&year.options[0])year.options[0].textContent=t.allYears;if(state&&state.options[0])state.options[0].textContent=t.allStates;if(cat&&cat.options[0])cat.options[0].textContent=t.allCategories;if(dashYear&&dashYear.options[0])dashYear.options[0].textContent=t.allYears;
  const newBtn=$('#newProjectBtn');if(newBtn)newBtn.textContent='+ '+t.newProject;
- const loginTitle=$('#loginView h1');if(loginTitle)loginTitle.textContent=t.loginTitle;
- const loginSub=$('#loginView p');if(loginSub)loginSub.textContent=t.loginSub;
- const loginBtn=$('#loginForm button');if(loginBtn)loginBtn.textContent=t.login;
+ const loginTitle=$('#loginView h1');if(loginTitle)loginTitle.textContent=t.loginTitle;const loginSub=$('#loginView p');if(loginSub)loginSub.textContent=t.loginSub;const loginBtn=$('#loginForm button');if(loginBtn)loginBtn.textContent=t.login;
+ const projectHeaders=ar?['الرمز','عنوان المشروع','السنة','الصنف','الكلفة المحينة','الإنجاز المادي','الوضعية','الملف']:['Code','Intitulé','Année','Catégorie','Coût actualisé','Avancement','État','Fiche'];
+ document.querySelectorAll('#projectsPage thead th').forEach((el,i)=>{if(projectHeaders[i])el.textContent=projectHeaders[i];});
+ const recentHeaders=ar?['الرمز','المشروع','السنة','نسبة التقدم','آخر تحيين']:['Code','Projet','Année','Avancement','Dernier suivi'];
+ document.querySelectorAll('#recentRows').forEach(()=>document.querySelectorAll('#dashboardPage .lower-grid thead th').forEach((el,i)=>{if(recentHeaders[i])el.textContent=recentHeaders[i];}));
+ if(ar){set('#dashboardPage .eyebrow','متابعة الاستثمارات البلدية');set('#dashboardPage .dashboard-toolbar .muted','مؤشرات مستخرجة من البيانات المسجلة بقاعدة البيانات.');}
+ else{set('#dashboardPage .eyebrow','PILOTAGE DES INVESTISSEMENTS');set('#dashboardPage .dashboard-toolbar .muted','Indicateurs calculés à partir des données enregistrées dans PostgreSQL.');}
  localStorage.setItem('pm-language',currentLang);
 }
 function showLogin(){$('#loginView').classList.remove('hidden');$('#appView').classList.add('hidden');}
