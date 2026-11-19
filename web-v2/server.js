@@ -88,7 +88,7 @@ app.post('/api/projects',authRequired,allow('admin'),async(req,res)=>{const b=re
  await c.query('COMMIT');res.status(201).json({id,project_code:code});
  }catch(e){await c.query('ROLLBACK');console.error(e);res.status(500).json({error:'Création impossible.'});}finally{c.release();}});
 app.put('/api/projects/:id',authRequired,async(req,res)=>{const b=req.body||{},role=req.user.role;
- const technical=['physical_progress','operational_status','current_stage','programming_date','start_date','duration_months','blocked_date','blockage_reason','corrective_action','planned_resumption_date','last_update_date','provisional_reception_date','warranty_months','definitive_reception_date','procedure_type'];
+ const technical=['physical_progress','operational_status','current_stage','programming_date','start_date','duration_months','blocked_date','blockage_reason','corrective_action','planned_resumption_date','last_update_date','provisional_reception_date','warranty_months' ,'definitive_reception_date'];
  const finance=['updated_cost','self_funding','loan','exceptional_aid','unassigned_aid','assigned_aid','other_funding','realized_resources','final_payment_date','closure_date'];
  const allowed=role==='admin'?[...technical,...finance,'title','category','procedure_type']:role==='technical'?technical:role==='finance'?finance:[];
  if(!allowed.length)return res.status(403).json({error:'Profil en lecture seule.'});
