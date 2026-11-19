@@ -18,21 +18,28 @@ function renderDashboard(){
  dashboardSubset=allProjects.filter(p=>!year||String(p.initial_programming_year||'')===year);
  const rows=dashboardSubset, total=rows.length,done=rows.filter(p=>p.operational_status==='completed').length,blocked=rows.filter(p=>p.operational_status==='blocked').length,late=lateProjects(rows);
  const budget=sum(rows,'updated_cost'),spent=sum(rows,'consumed_credits'),rate=budget?Math.max(0,spent/budget*100):0;
+ const provisional=rows.filter(p=>p.operational_status==='completed'&&!p.financially_closed);
+ const finalClosed=rows.filter(p=>p.operational_status==='completed'&&p.financially_closed);
+ const provisionalTotal=sum(provisional,'provisional_balance'),finalTotal=sum(finalClosed,'final_residual');
+ const late=lateProjects(rows);
  $('#kTotal').textContent=total;$('#kTotalSub').textContent=year?'Programmés en '+year:'Toutes années confondues';
  $('#kDone').textContent=done;$('#kDoneSub').textContent='Taux de réalisation '+pct(total?done/total*100:0);$('#kDoneProgress').style.width=Math.min(100,total?done/total*100:0)+'%';
  $('#kConsumption').textContent=pct(rate);$('#kConsumptionSub').textContent=money(spent)+' / '+money(budget);$('#kConsumptionProgress').style.width=Math.min(100,rate)+'%';
- $('#kBlocked').textContent=blocked;$('#kLate').textContent=late.length;$('#kBudget').textContent=money(budget);
- renderYearChart(rows);renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);
+ $('#kBlocked').textContent=blocked;$('#kLate').textContent=late.length;
+ $('#kProvisional').textContent=money(provisionalTotal);$('#kProvisionalSub').textContent=provisional.length+' projet(s) achevé(s) non clôturé(s)';
+ $('#kFinalResidual').textContent=money(finalTotal);$('#kFinalSub').textContent=finalClosed.length+' projet(s) clôturé(s) définitivement';
+ renderCompletedBalances(rows);
+ renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);
 }
-function renderYearChart(rows){
- const years=[...new Set(rows.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
+function renderYearChart(){
+ const years=[...new Set(allProjects.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
  if(!years.length){$('#yearChart').innerHTML='<p class="muted">Aucune année de programmation renseignée.</p>';return;}
- const vals=years.map(y=>{const a=rows.filter(p=>Number(p.initial_programming_year)===y);return {year:y,count:a.length,budget:sum(a,'updated_cost')};});
- const max=Math.max(1,...vals.map(x=>x.count)),w=Math.max(440,years.length*78+80),h=205,left=38,right=18,top=18,bottom=38,pw=w-left-right,ph=h-top-bottom;
- const pts=vals.map((x,i)=>({...x,x:left+(vals.length===1?pw/2:i*pw/(vals.length-1)),y:top+ph-(x.count/max)*ph}));
- const poly=pts.map(p=>p.x+','+p.y).join(' ');
- const grid=[0,.5,1].map(t=>{let y=top+ph-t*ph;return '<line x1="'+left+'" y1="'+y+'" x2="'+(w-right)+'" y2="'+y+'" class="chart-grid"/><text x="'+(left-9)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+Math.round(max*t)+'</text>';}).join('');
- $('#yearChart').innerHTML='<div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="year-svg">'+grid+'<polyline points="'+poly+'" class="animated-line"/>'+pts.map(p=>'<g class="year-mark" data-year="'+p.year+'" tabindex="0"><circle cx="'+p.x+'" cy="'+p.y+'" r="6"/><text x="'+p.x+'" y="'+(p.y-12)+'" text-anchor="middle" class="point-label">'+p.count+'</text><text x="'+p.x+'" y="'+(h-12)+'" text-anchor="middle" class="axis-label">'+p.year+'</text><title>'+p.count+' projets · '+money(p.budget)+'</title></g>').join('')+'</svg></div><p class="chart-hint">Cliquez sur une année pour appliquer le filtre global. Le total de projets par année reste calculé sur les données du périmètre.</p>';
+ const vals=years.map(y=>{const items=allProjects.filter(p=>Number(p.initial_programming_year)===y);return {year:y,count:items.length,budget:sum(items,'updated_cost')};});
+ const max=Math.max(1,...vals.map(x=>x.count)),w=Math.max(520,years.length*90+90),h=230,l=45,r=22,t=26,b=42,pw=w-l-r,ph=h-t-b;
+ const pts=vals.map((x,i)=>({...x,x:l+(vals.length===1?pw/2:i*pw/(vals.length-1)),y:t+ph-x.count/max*ph}));
+ const line=pts.map(p=>p.x+','+p.y).join(' ');
+ const grid=[0,.5,1].map(v=>{const y=t+ph-v*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-8)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+Math.round(max*v)+'</text>';}).join('');
+ $('#yearChart').innerHTML='<div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="year-svg">'+grid+'<polyline points="'+line+'" class="animated-line"/>'+pts.map(p=>'<g class="year-mark" data-year="'+p.year+'" tabindex="0"><circle cx="'+p.x+'" cy="'+p.y+'" r="6"/><text x="'+p.x+'" y="'+(p.y-13)+'" text-anchor="middle" class="point-label">'+p.count+'</text><text x="'+p.x+'" y="'+(h-12)+'" text-anchor="middle" class="axis-label">'+p.year+'</text><title>'+p.count+' projets · '+money(p.budget)+'</title></g>').join('')+'</svg></div><p class="chart-hint">Cliquez sur une année pour filtrer le tableau de bord. Les données de ce graphique restent indépendantes du filtre annuel.</p>';
  document.querySelectorAll('[data-year]').forEach(el=>el.addEventListener('click',()=>{$('#dashboardYear').value=el.dataset.year;renderDashboard();}));
 }
 function donutMarkup(items,total,label){
@@ -45,8 +52,7 @@ function donutMarkup(items,total,label){
 function renderStatusChart(rows){
  const defs=[['Non démarrés','not_started'],['En cours','in_progress'],['Bloqués','blocked'],['Achevés','completed'],['Annulés','cancelled']];
  const items=defs.map(([label,key])=>{const a=rows.filter(p=>(p.operational_status||'not_started')===key);return {label,key:'status',valueKey:key,value:a.length,count:a.length,amount:sum(a,'updated_cost')};});
- $('#statusChart').innerHTML=donutMarkup(items,rows.length,'État opérationnel');
- bindDonut('status');
+ $('#statusChart').innerHTML=donutMarkup(items,rows.length,'État opérationnel');bindDonut('status');
 }
 function renderFundingChart(rows){
  const defs=[['Autofinancement','self_funding'],['Emprunt','loan'],['Aides exceptionnelles','exceptional_aid'],['Aides non affectées','unassigned_aid'],['Aides affectées','assigned_aid'],['Autres sources','other_funding']];
@@ -60,7 +66,8 @@ function renderCategoryChart(rows){
  const cats=[...new Set(rows.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
  if(!cats.length){$('#categoryChart').innerHTML='<p class="muted">Aucune catégorie renseignée.</p>';return;}
  const max=Math.max(1,...cats.map(c=>sum(rows.filter(p=>p.category===c),'updated_cost')));
- $('#categoryChart').innerHTML=cats.map(c=>{const a=rows.filter(p=>p.category===c),alloc=sum(a,'updated_cost'),paid=sum(a,'consumed_credits');return '<button class="category-row" data-category="'+esc(c)+'"><span class="category-name">'+esc(c)+' <small>'+a.length+' projet(s)</small></span><span class="bar-pair"><span><i class="bar-allocated" style="width:'+alloc/max*100+'%"></i></span><span><i class="bar-consumed" style="width:'+Math.min(100,paid/max*100)+'%"></i></span></span><span class="category-values"><b>'+money(alloc)+'</b><small>'+money(paid)+' consommés</small></span></button>';}).join('');
+ $('#categoryChart').innerHTML=cats.map(c=>{const a=rows.filter(p=>p.category===c),alloc=sum(a,'updated_cost'),paid=sum(a,'consumed_credits');return '<button class="category-row" data-category="'+esc(c)+'"><span class="category-name">'+esc(c)+' <small>'+a.length+' projet(s)</small></span><span class="bar-pair"><span><i class="bar-allocated" style="width:0" data-width="'+alloc/max*100+'%"></i></span><span><i class="bar-consumed" style="width:0" data-width="'+Math.min(100,paid/max*100)+'%"></i></span></span><span class="category-values"><b>'+money(alloc)+'</b><small>'+money(paid)+' consommés</small></span></button>';}).join('');
+ requestAnimationFrame(()=>document.querySelectorAll('#categoryChart i[data-width]').forEach(el=>el.style.width=el.dataset.width));
  document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>showChartDetail('category','category',el.dataset.category,el.dataset.category)));
 }
 function renderTrend(){
@@ -98,6 +105,15 @@ function showChartDetail(panel,key,value,label){
  host.classList.remove('hidden');host.querySelector('.detail-close').onclick=()=>host.classList.add('hidden');
  host.querySelectorAll('[data-open-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.openProject)));
 }
+function renderCompletedBalances(rows){
+ const completed=rows.filter(p=>p.operational_status==='completed');
+ const overdue=completed.filter(p=>{if(p.financially_closed||!p.provisional_reception_date||p.warranty_months==null)return false;const d=new Date(String(p.provisional_reception_date).slice(0,10)+'T00:00:00');d.setMonth(d.getMonth()+Number(p.warranty_months)+3);return d<new Date();});
+ const provisional=completed.filter(p=>!p.financially_closed),closed=completed.filter(p=>p.financially_closed);
+ $('#balanceOverdueCount').textContent=overdue.length;$('#balanceProvisionalTotal').textContent=money(sum(provisional,'provisional_balance'));$('#balanceFinalTotal').textContent=money(sum(closed,'final_residual'));
+ $('#completedBalanceRows').innerHTML=completed.length?completed.map(p=>'<tr><td><button class="link" data-open-project="'+p.id+'">'+esc(p.project_code)+' · '+esc(p.title)+'</button></td><td>'+(p.initial_programming_year||'—')+'</td><td>'+esc(p.procedure_type||'—')+'</td><td>'+(p.financially_closed?'Clôturé définitivement':'À clôturer')+'</td><td>'+money(p.updated_cost)+'</td><td>'+money(p.consumed_credits)+'</td><td>'+money(p.provisional_balance)+'</td><td>'+(p.financially_closed?money(p.final_residual):'—')+'</td></tr>').join(''):'<tr><td colspan="8" class="muted">Aucun projet achevé pour la période sélectionnée.</td></tr>';
+ $('#balanceCountLabel').textContent=completed.length+' projet(s) achevé(s) · '+overdue.length+' alerte(s) calculable(s) · '+provisional.length+' solde(s) provisoire(s) · '+closed.length+' reliquat(s) définitif(s).';
+ document.querySelectorAll('#completedBalanceRows [data-open-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.openProject)));
+}
 function renderRecent(rows){
  const recent=[...rows].filter(p=>p.last_followup_date).sort((a,b)=>String(b.last_followup_date).localeCompare(String(a.last_followup_date))).slice(0,7);
  $('#recentRows').innerHTML=recent.length?recent.map(p=>'<tr><td><b>'+esc(p.project_code)+'</b></td><td>'+esc(p.title)+'</td><td>'+(p.initial_programming_year||'—')+'</td><td>'+Number(p.physical_progress||0).toFixed(1)+' %</td><td>'+dateFR(p.last_followup_date)+'</td></tr>').join(''):'<tr><td colspan="5" class="muted">Aucun suivi historisé disponible.</td></tr>';
@@ -111,7 +127,7 @@ function renderAlerts(rows){
  $('#alertsList').innerHTML=alerts.length?alerts.slice(0,14).map(a=>'<div class="alert-item '+a.kind+'"><b>'+esc(a.title)+'</b><span>'+esc(a.label)+' — '+esc(a.detail)+'</span></div>').join(''):'<p class="muted">Aucun point de vigilance calculable à partir des dates et statuts renseignés.</p>';
 }
 async function loadDashboard(){const d=await api('/dashboard');allProjects=d.items||[];const years=[...new Set(allProjects.map(p=>p.initial_programming_year).filter(Boolean))].sort((a,b)=>a-b);const select=$('#dashboardYear'),old=select.value;select.innerHTML='<option value="">Toutes les années</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');select.value=years.includes(Number(old))?old:'';renderDashboard();}
-async function loadProjects(){const q=new URLSearchParams();if($('#projectSearch').value)q.set('search',$('#projectSearch').value);if($('#yearSearch').value)q.set('year',$('#yearSearch').value);const d=await api('/projects?'+q);$('#projectRows').innerHTML=d.items.map(x=>'<tr><td><b>'+esc(x.project_code)+'</b></td><td>'+esc(x.title)+'</td><td>'+(x.initial_programming_year||'—')+'</td><td>'+esc(x.category||'—')+'</td><td>'+money(x.updated_cost)+'</td><td>'+Number(x.physical_progress||0).toFixed(1)+' %</td><td><span class="status '+esc(x.operational_status)+'">'+statusLabel(x.operational_status)+'</span></td><td><button class="secondary" data-project="'+x.id+'">Ouvrir</button></td></tr>').join('');document.querySelectorAll('[data-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.project)));}
+async function loadProjects(){const q=new URLSearchParams();if($('#projectSearch').value)q.set('search',$('#projectSearch').value);if($('#yearSearch').value)q.set('year',$('#yearSearch').value);if($('#statusSearch').value)q.set('status',$('#statusSearch').value);if($('#categorySearch').value)q.set('category',$('#categorySearch').value);const d=await api('/projects?'+q);$('#projectRows').innerHTML=d.items.map(x=>'<tr><td><b>'+esc(x.project_code)+'</b></td><td>'+esc(x.title)+'</td><td>'+(x.initial_programming_year||'—')+'</td><td>'+esc(x.category||'—')+'</td><td>'+money(x.updated_cost)+'</td><td>'+Number(x.physical_progress||0).toFixed(1)+' %</td><td><span class="status '+esc(x.operational_status)+'">'+statusLabel(x.operational_status)+'</span></td><td><button class="secondary" data-project="'+x.id+'">Ouvrir</button></td></tr>').join('');document.querySelectorAll('[data-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.project)));}
 async function openProject(id){try{activeProjectId=id;const p=await api('/projects/'+encodeURIComponent(id));$('#detailTitle').textContent=p.title;$('#detailCode').textContent=p.project_code+' · '+(p.initial_programming_year||'Année non renseignée');const roles={principal:'Responsable principal',technical:'Technique',finance:'Finances',procurement:'Marchés',gis:'SIG'};const resp=(p.responsibilities||[]).map(x=>'<tr><td>'+roles[x.responsibility_role]+'</td><td>'+esc(x.display_name)+'</td><td>'+dateFR(x.assigned_at)+'</td></tr>').join('');const hist=(p.history||[]).map(x=>'<tr><td>'+new Date(x.created_at).toLocaleString('fr-FR')+'</td><td>'+esc(x.display_name||'Système')+'</td><td>'+esc(x.summary)+'</td></tr>').join('');const assignees=await api('/assignees');const roleOptions=Object.entries(roles);const controls=roleOptions.map(([key,label])=>'<div class="assignment-row"><label>'+label+'<select data-role="'+key+'"><option value="">Choisir un agent</option>'+assignees.items.map(a=>'<option value="'+a.id+'">'+esc(a.display_name)+'</option>').join('')+'</select></label><button class="secondary" data-assign="'+key+'">Affecter</button></div>').join('');$('#detailContent').innerHTML='<div class="detail-grid"><div><small>Coût actualisé</small><b>'+money(p.updated_cost)+'</b></div><div><small>Crédits consommés</small><b>'+money(p.legacy_consumed_credits)+'</b></div><div><small>Avancement physique</small><b>'+Number(p.physical_progress||0).toFixed(1)+' %</b></div><div><small>État opérationnel</small><b>'+statusLabel(p.operational_status)+'</b></div></div><h3>Responsabilités</h3><div class="table-wrap"><table><thead><tr><th>Rôle</th><th>Agent</th><th>Depuis le</th></tr></thead><tbody>'+resp+'</tbody></table></div><h3>Modifier les responsabilités</h3><div class="assignment-grid">'+controls+'</div><h3>Historique</h3><div class="table-wrap"><table><thead><tr><th>Date</th><th>Utilisateur</th><th>Événement</th></tr></thead><tbody>'+hist+'</tbody></table></div><p class="muted">Les modules techniques, financiers, marchés, planning et SIG seront intégrés progressivement.</p>';$('#detailDialog').showModal();document.querySelectorAll('[data-assign]').forEach(btn=>btn.addEventListener('click',async()=>{const role=btn.dataset.assign,user_id=Number(document.querySelector('[data-role="'+role+'"]').value);if(!user_id){alert('Sélectionnez un agent.');return;}try{await api('/projects/'+activeProjectId+'/responsibilities',{method:'PUT',body:JSON.stringify({role,user_id})});await openProject(activeProjectId);}catch(e){alert(e.message);}}));}catch(e){alert(e.message);}}
 async function loadAssignees(){const d=await api('/assignees');$('#principalSelect').innerHTML='<option value="">Sélectionner un responsable</option>'+d.items.map(x=>'<option value="'+x.id+'">'+esc(x.display_name)+' — '+esc(x.role)+'</option>').join('');}
 async function loadUsers(){const d=await api('/users');$('#usersList').innerHTML='<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Actif</th></tr></thead><tbody>'+d.items.map(x=>'<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.role)+'</td><td>'+(x.is_active?'Oui':'Non')+'</td></tr>').join('')+'</tbody></table></div>';}
