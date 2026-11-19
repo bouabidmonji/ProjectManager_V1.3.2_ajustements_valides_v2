@@ -15,6 +15,7 @@ Ordre impératif dans une base PostgreSQL V2 neuve :
 1. Exécuter `v2-migration/schema.sql`.
 2. Exécuter `v2-migration/migration_from_dump.sql`.
 3. Exécuter `web-v2/schema-auth.sql`.
+4. Exécuter `web-v2/schema-workspace.sql` pour activer les responsabilités et l'historique.
 
 Le script d'import :
 - reprend les 37 projets et les 3 paramètres présents dans le dump ;
@@ -36,7 +37,9 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 2. Dans PowerShell, ouvrir ce dossier et lancer `npm install`.
 3. Copier `.env.example` vers `.env` et renseigner les variables PostgreSQL et `JWT_SECRET`.
 4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.
-5. Créer le premier administrateur :
+5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer l'historique et les responsabilités organisationnelles.
+6. Exécuter `schema-profiles-finance.sql` pour installer les profils `admin`, `technical`, `finance` et `viewer`.
+6. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"
    $env:JWT_SECRET="SECRET_ALEATOIRE_DE_32_CARACTERES_MINIMUM"
@@ -45,29 +48,36 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
    $env:ADMIN_PASSWORD="MOT_DE_PASSE_LONG_ET_UNIQUE"
    npm run admin:create
    ```
-6. Reporter les mêmes paramètres dans le fichier `.env`.
-7. Démarrer le serveur : `npm start`.
-8. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
+7. Reporter les mêmes paramètres dans le fichier `.env`.
+8. Démarrer le serveur : `npm start`.
+9. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
 
 ## Fonctions actuellement présentes dans le socle V2
 - Authentification avec cookie HTTP-only et expiration de session.
-- Contrôle des rôles côté API : administrateur, agent, membre, supervision.
+- Contrôle des profils côté API : administrateur, service technique, service financier et consultation.
+- Tableau de bord avec indicateurs de consommation, retards, projets bloqués et clôture financière.
+- Graphiques animés et interactifs ; répartition annuelle indépendante du filtre global.
+- Filtres de projets par année enregistrée, état opérationnel et catégorie.
+- Fiche projet avec données techniques, suivis, finances, paiements et historique.
+- Permissions métier contrôlées côté serveur : technique pour le suivi physique ; finance pour ressources, crédits, paiements et clôture ; consultation en lecture seule.
+- Basculement de langue français/arabe et prise en charge RTL de l'interface principale.
 - Tableau de bord initial et liste/recherche des projets.
 - Création de projet et code annuel automatique.
 - API de consultation et modification des champs principaux.
+- Fiche projet consultable, responsabilités par domaine et historique des affectations.
+- Responsable principal obligatoire à la création d'un projet.
 - Gestion initiale des utilisateurs par API (création réservée à l'administrateur).
 - Journal d'audit minimal.
 - Contrôle de santé de l'API et de la connexion PostgreSQL.
 
 ## Modules non encore terminés
 La version présente est un socle de développement, pas une version de production. Restent notamment :
-- fiche projet complète et historique des modifications ;
-- responsabilités principales et secondaires, droits fins par domaine ;
-- suivi financier complet (paiements, engagements, reliquats, contrôles) ;
+- fiche projet complète enrichie (documents, marchés, Gantt et pièces jointes) ;
+- suivi financier complet (engagements, pièces justificatives, rapprochements et contrôles) ;
 - module marchés et étapes de procédure ;
 - diagrammes de Gantt et alertes ;
 - SIG Leaflet : points, polylignes, polygones, photos ;
-- rapports PDF français/arabe et interface arabe RTL complète ;
+- traduction intégrale des formulaires et rapports PDF français/arabe ;
 - sauvegarde/restauration, gestion des sessions et durcissement de sécurité ;
 - tests d'intégration, de charge et recette avec les agents.
 
