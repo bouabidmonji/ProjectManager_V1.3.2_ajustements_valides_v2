@@ -37,7 +37,8 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 2. Dans PowerShell, ouvrir ce dossier et lancer `npm install`.
 3. Copier `.env.example` vers `.env` et renseigner les variables PostgreSQL et `JWT_SECRET`.
 4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.
-5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer les responsabilités et l'historique.
+5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer l'historique et les responsabilités organisationnelles.
+6. Exécuter `schema-profiles-finance.sql` pour installer les profils `admin`, `technical`, `finance` et `viewer`.
 6. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"
@@ -53,7 +54,13 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 
 ## Fonctions actuellement présentes dans le socle V2
 - Authentification avec cookie HTTP-only et expiration de session.
-- Contrôle des rôles côté API : administrateur, agent, membre, supervision.
+- Contrôle des profils côté API : administrateur, service technique, service financier et consultation.
+- Tableau de bord avec indicateurs de consommation, retards, projets bloqués et clôture financière.
+- Graphiques animés et interactifs ; répartition annuelle indépendante du filtre global.
+- Filtres de projets par année enregistrée, état opérationnel et catégorie.
+- Fiche projet avec données techniques, suivis, finances, paiements et historique.
+- Permissions métier contrôlées côté serveur : technique pour le suivi physique ; finance pour ressources, crédits, paiements et clôture ; consultation en lecture seule.
+- Basculement de langue français/arabe et prise en charge RTL de l'interface principale.
 - Tableau de bord initial et liste/recherche des projets.
 - Création de projet et code annuel automatique.
 - API de consultation et modification des champs principaux.
@@ -65,13 +72,12 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 
 ## Modules non encore terminés
 La version présente est un socle de développement, pas une version de production. Restent notamment :
-- fiche projet complète et historique des modifications ;
-- responsabilités principales et secondaires, droits fins par domaine ;
-- suivi financier complet (paiements, engagements, reliquats, contrôles) ;
+- fiche projet complète enrichie (documents, marchés, Gantt et pièces jointes) ;
+- suivi financier complet (engagements, pièces justificatives, rapprochements et contrôles) ;
 - module marchés et étapes de procédure ;
 - diagrammes de Gantt et alertes ;
 - SIG Leaflet : points, polylignes, polygones, photos ;
-- rapports PDF français/arabe et interface arabe RTL complète ;
+- traduction intégrale des formulaires et rapports PDF français/arabe ;
 - sauvegarde/restauration, gestion des sessions et durcissement de sécurité ;
 - tests d'intégration, de charge et recette avec les agents.
 
