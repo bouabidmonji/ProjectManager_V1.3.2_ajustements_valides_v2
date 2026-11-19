@@ -4,7 +4,7 @@ let currentUser=null,activeProjectId=null,allProjects=[],dashboardSubset=[],tren
 const palette=['#2676a5','#e59b45','#8b78bd','#d46c72','#8b9baa','#c06a9b','#7e9b42','#4b9aaf','#b17c4d','#6b78a8'];
 const money=v=>new Intl.NumberFormat('fr-TN',{style:'decimal',maximumFractionDigits:0}).format(Number(v||0))+' DT';
 const pct=v=>Number(v||0).toLocaleString('fr-TN',{maximumFractionDigits:1})+' %';
-const statusLabel=s=>({not_started:'Non démarré',in_progress:'En cours',blocked:'Bloqué / suspendu',completed:'Achevé',cancelled:'Annulé'}[s]||s||'—');
+const statusLabel=s=>currentLang==='ar'?({not_started:'لم ينطلق',in_progress:'في طور الإنجاز',blocked:'معطل / متوقف',completed:'منجز',cancelled:'ملغى'}[s]||s||'—'):({not_started:'Non démarré',in_progress:'En cours',blocked:'Bloqué / suspendu',completed:'Achevé',cancelled:'Annulé'}[s]||s||'—');
 const sum=(a,k)=>a.reduce((n,p)=>n+Number(p[k]||0),0);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function dateFR(v){if(!v)return '—';const d=new Date(String(v).slice(0,10)+'T00:00:00');return isNaN(d)?'—':d.toLocaleDateString('fr-FR');}
@@ -47,11 +47,11 @@ function renderDashboard(){
  const provisionalTotal=sum(provisional,'provisional_balance'),finalTotal=sum(finalClosed,'final_residual');
  const late=lateProjects(rows);
  $('#kTotal').textContent=total;$('#kTotalSub').textContent=year?'Programmés en '+year:'Toutes années confondues';
- $('#kDone').textContent=done;$('#kDoneSub').textContent='Taux de réalisation '+pct(total?done/total*100:0);$('#kDoneProgress').style.width=Math.min(100,total?done/total*100:0)+'%';
+ $('#kDone').textContent=done;$('#kDoneSub').textContent=(currentLang==='ar'?'نسبة الإنجاز ':'Taux de réalisation ')+pct(total?done/total*100:0);$('#kDoneProgress').style.width=Math.min(100,total?done/total*100:0)+'%';
  $('#kConsumption').textContent=pct(rate);$('#kConsumptionSub').textContent=money(spent)+' / '+money(budget);$('#kConsumptionProgress').style.width=Math.min(100,rate)+'%';
  $('#kBlocked').textContent=blocked;$('#kLate').textContent=late.length;
- $('#kProvisional').textContent=money(provisionalTotal);$('#kProvisionalSub').textContent=provisional.length+' projet(s) achevé(s) non clôturé(s)';
- $('#kFinalResidual').textContent=money(finalTotal);$('#kFinalSub').textContent=finalClosed.length+' projet(s) clôturé(s) définitivement';
+ $('#kProvisional').textContent=money(provisionalTotal);$('#kProvisionalSub').textContent=currentLang==='ar'?provisional.length+' مشروع منجز دون غلق نهائي':provisional.length+' projet(s) achevé(s) non clôturé(s)';
+ $('#kFinalResidual').textContent=money(finalTotal);$('#kFinalSub').textContent=currentLang==='ar'?finalClosed.length+' مشروع مغلق نهائيا':finalClosed.length+' projet(s) clôturé(s) définitivement';
  renderCompletedBalances(rows);
  renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);
 }
@@ -174,7 +174,7 @@ async function openProject(id){
 }
 async function loadAssignees(){const d=await api('/assignees');$('#principalSelect').innerHTML='<option value="">Sélectionner un responsable</option>'+d.items.map(x=>'<option value="'+x.id+'">'+esc(x.display_name)+' — '+esc(x.role)+'</option>').join('');}
 async function loadUsers(){const d=await api('/users');$('#usersList').innerHTML='<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Actif</th></tr></thead><tbody>'+d.items.map(x=>'<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.role)+'</td><td>'+(x.is_active?'Oui':'Non')+'</td></tr>').join('')+'</tbody></table></div>';}
-function nav(page){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$('#'+page+'Page').classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('#pageTitle').textContent=({dashboard:'Tableau de bord',projects:'Projets',users:'Utilisateurs'}[page]||page);if(page==='projects')loadProjects().catch(e=>alert(e.message));if(page==='users')loadUsers().catch(e=>alert(e.message));}
+function nav(page){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$('#'+page+'Page').classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('#pageTitle').textContent=({dashboard:translations[currentLang].dashboard,projects:translations[currentLang].projects,users:translations[currentLang].users}[page]||page);if(page==='projects')loadProjects().catch(e=>alert(e.message));if(page==='users')loadUsers().catch(e=>alert(e.message));}
 $('#languageSwitch').value=localStorage.getItem('pm-language')||'fr';applyLanguage($('#languageSwitch').value);$('#languageSwitch').addEventListener('change',e=>applyLanguage(e.target.value));
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#loginError').textContent='';const f=new FormData(e.currentTarget);try{const d=await api('/auth/login',{method:'POST',body:JSON.stringify({username:f.get('username'),password:f.get('password')})});currentUser=d.user;showApp();nav('dashboard');await loadDashboard();}catch(x){$('#loginError').textContent=x.message;}});
 $('#logoutBtn').addEventListener('click',async()=>{await api('/auth/logout',{method:'POST'}).catch(()=>{});currentUser=null;showLogin();});
