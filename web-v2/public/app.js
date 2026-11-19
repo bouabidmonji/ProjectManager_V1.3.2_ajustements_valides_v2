@@ -32,7 +32,7 @@ function applyLanguage(lang){
  document.querySelectorAll('#recentRows').forEach(()=>document.querySelectorAll('#dashboardPage .lower-grid thead th').forEach((el,i)=>{if(recentHeaders[i])el.textContent=recentHeaders[i];}));
  if(ar){set('#dashboardPage .eyebrow','متابعة الاستثمارات البلدية');set('#dashboardPage .dashboard-toolbar .muted','مؤشرات مستخرجة من البيانات المسجلة بقاعدة البيانات.');}
  else{set('#dashboardPage .eyebrow','PILOTAGE DES INVESTISSEMENTS');set('#dashboardPage .dashboard-toolbar .muted','Indicateurs calculés à partir des données enregistrées dans PostgreSQL.');}
- localStorage.setItem('pm-language',currentLang);
+ localStorage.setItem('pm-language',currentLang);if(allProjects.length&&!$('#dashboardPage').classList.contains('hidden'))renderDashboard();
 }
 function showLogin(){$('#loginView').classList.remove('hidden');$('#appView').classList.add('hidden');}
 function showApp(){$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');$('#userLabel').textContent=currentUser.name+' · '+currentUser.role;$('#welcome').textContent='Connecté : '+currentUser.name;$('#usersNav').classList.toggle('hidden',currentUser.role!=='admin');}
@@ -75,12 +75,12 @@ function donutMarkup(items,total,label){
  return '<div class="donut-layout"><svg viewBox="0 0 120 120" class="donut-svg" role="img" aria-label="'+esc(label)+'"><circle cx="60" cy="60" r="43" fill="none" stroke="#edf1f5" stroke-width="17"/>'+arcs+'<text x="60" y="57" text-anchor="middle" class="donut-number">'+valid.reduce((a,x)=>a+x.count,0)+'</text><text x="60" y="70" text-anchor="middle" class="donut-caption">'+(valid[0].key==='status'?'PROJETS':'SOURCES')+'</text></svg><div class="legend-list">'+legend+'</div></div>';
 }
 function renderStatusChart(rows){
- const defs=[['Non démarrés','not_started'],['En cours','in_progress'],['Bloqués','blocked'],['Achevés','completed'],['Annulés','cancelled']];
+ const defs=currentLang==='ar'?[['لم ينطلقوا','not_started'],['في طور الإنجاز','in_progress'],['معطلون','blocked'],['منجزون','completed'],['ملغون','cancelled']]:[['Non démarrés','not_started'],['En cours','in_progress'],['Bloqués','blocked'],['Achevés','completed'],['Annulés','cancelled']];
  const items=defs.map(([label,key])=>{const a=rows.filter(p=>(p.operational_status||'not_started')===key);return {label,key:'status',valueKey:key,value:a.length,count:a.length,amount:sum(a,'updated_cost')};});
  $('#statusChart').innerHTML=donutMarkup(items,rows.length,'État opérationnel');bindDonut('status');
 }
 function renderFundingChart(rows){
- const defs=[['Autofinancement','self_funding'],['Emprunt','loan'],['Aides exceptionnelles','exceptional_aid'],['Aides non affectées','unassigned_aid'],['Aides affectées','assigned_aid'],['Autres sources','other_funding']];
+ const defs=currentLang==='ar'?[['تمويل ذاتي','self_funding'],['قرض','loan'],['مساعدات استثنائية','exceptional_aid'],['مساعدات غير مخصصة','unassigned_aid'],['مساعدات مخصصة','assigned_aid'],['مصادر أخرى','other_funding']]:[['Autofinancement','self_funding'],['Emprunt','loan'],['Aides exceptionnelles','exceptional_aid'],['Aides non affectées','unassigned_aid'],['Aides affectées','assigned_aid'],['Autres sources','other_funding']];
  const items=defs.map(([label,key])=>{const a=rows.filter(p=>Number(p[key])>0);return {label,key:'funding',valueKey:key,value:sum(rows,key),count:a.length,amount:sum(rows,key)};}).filter(x=>x.value>0);
  $('#fundingChart').innerHTML=donutMarkup(items,items.reduce((a,x)=>a+x.value,0),'Sources de financement');bindDonut('funding');
 }
