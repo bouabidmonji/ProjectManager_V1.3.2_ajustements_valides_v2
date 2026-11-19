@@ -40,8 +40,8 @@ function lateProjects(items){const now=new Date();now.setHours(0,0,0,0);return i
 function renderDashboard(){
  const year=$('#dashboardYear').value;
  dashboardSubset=allProjects.filter(p=>!year||String(p.initial_programming_year||'')===year);
- const rows=dashboardSubset, total=rows.length,done=rows.filter(p=>p.operational_status==='completed').length,blocked=rows.filter(p=>p.operational_status==='blocked').length,late=lateProjects(rows);
- const budget=sum(rows,'updated_cost'),spent=sum(rows,'consumed_credits'),rate=budget?Math.max(0,spent/budget*100):0;
+ const rows=dashboardSubset, total=rows.length,done=rows.filter(p=>p.operational_status==='completed').length,blocked=rows.filter(p=>p.operational_status==='blocked').length;
+ const budget=sum(rows,'updated_cost'),spent=sum(rows,'consumed_credits'),rate=budget?Math.max(0,Math.min(100,spent/budget*100)):0;
  const provisional=rows.filter(p=>p.operational_status==='completed'&&!p.financially_closed);
  const finalClosed=rows.filter(p=>p.operational_status==='completed'&&p.financially_closed);
  const provisionalTotal=sum(provisional,'provisional_balance'),finalTotal=sum(finalClosed,'final_residual');
