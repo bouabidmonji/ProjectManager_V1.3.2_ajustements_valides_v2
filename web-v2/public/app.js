@@ -1,6 +1,6 @@
 'use strict';
 const $=s=>document.querySelector(s);
-let currentUser=null,activeProjectId=null,allProjects=[],dashboardSubset=[],trendSelected=null;
+let currentUser=null,activeProjectId=null,allProjects=[],dashboardSubset=[],trendSelected=null,currentLang='fr';
 const palette=['#2676a5','#e59b45','#8b78bd','#d46c72','#8b9baa','#c06a9b','#7e9b42','#4b9aaf','#b17c4d','#6b78a8'];
 const money=v=>new Intl.NumberFormat('fr-TN',{style:'decimal',maximumFractionDigits:0}).format(Number(v||0))+' DT';
 const pct=v=>Number(v||0).toLocaleString('fr-TN',{maximumFractionDigits:1})+' %';
@@ -9,6 +9,30 @@ const sum=(a,k)=>a.reduce((n,p)=>n+Number(p[k]||0),0);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function dateFR(v){if(!v)return '—';const d=new Date(String(v).slice(0,10)+'T00:00:00');return isNaN(d)?'—':d.toLocaleDateString('fr-FR');}
 async function api(url,options={}){const r=await fetch('/api'+url,{...options,credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Erreur API');return d;}
+const translations={
+ fr:{dashboard:'Tableau de bord',projects:'Projets',users:'Utilisateurs',logout:'Déconnexion',login:'Se connecter',loginTitle:'Project Manager',loginSub:'Commune de Tataouine · Version web V2',total:'Nombre total de projets',consumption:'Taux de consommation des crédits',late:'Projets en retard',done:'Projets réalisés',blocked:'Projets bloqués',provisional:'Solde provisoire des projets achevés',final:'Reliquat définitif',year:'Répartition par année',status:'État des projets',funding:'Répartition par source de financement',category:'Crédits alloués et consommés par catégorie',balance:'Clôture administrative et situation financière des projets achevés',recent:'Projets récemment actualisés',alerts:'Points de vigilance',search:'Rechercher code, intitulé ou catégorie',allYears:'Toutes les années',allStates:'Tous les états',allCategories:'Toutes les catégories',newProject:'Nouveau projet',language:'Langue'},
+ ar:{dashboard:'لوحة القيادة',projects:'المشاريع',users:'المستخدمون',logout:'تسجيل الخروج',login:'تسجيل الدخول',loginTitle:'إدارة المشاريع',loginSub:'بلدية تطاوين · النسخة الإلكترونية V2',total:'العدد الجملي للمشاريع',consumption:'نسبة استهلاك الاعتمادات',late:'المشاريع المتأخرة',done:'المشاريع المنجزة',blocked:'المشاريع المعطلة',provisional:'الرصيد الوقتي للمشاريع المنجزة',final:'البقايا النهائية',year:'توزيع المشاريع حسب السنة',status:'وضعية المشاريع',funding:'التوزيع حسب مصادر التمويل',category:'الاعتمادات المرصودة والمستهلكة حسب الصنف',balance:'الغلق الإداري والوضعية المالية للمشاريع المنجزة',recent:'آخر المشاريع المحينة',alerts:'نقاط المتابعة',search:'البحث عن الرمز أو عنوان المشروع أو الصنف',allYears:'كل السنوات',allStates:'كل الوضعيات',allCategories:'كل الأصناف',newProject:'مشروع جديد',language:'اللغة'}
+};
+function applyLanguage(lang){
+ currentLang=lang==='ar'?'ar':'fr';const ar=currentLang==='ar',t=translations[currentLang];
+ document.documentElement.lang=currentLang;document.documentElement.dir=ar?'rtl':'ltr';document.body.classList.toggle('rtl',ar);
+ const set=(sel,value)=>{const el=$(sel);if(el)el.textContent=value;};
+ set('#pageTitle',t.dashboard);set('#languageCaption',t.language);
+ const navs=document.querySelectorAll('.nav');if(navs[0])navs[0].textContent=t.dashboard;if(navs[1])navs[1].textContent=t.projects;if(navs[2])navs[2].textContent=t.users;
+ set('#logoutBtn',t.logout);set('#kTotalLabel',t.total);set('#kConsumptionLabel',t.consumption);
+ const headings=[...document.querySelectorAll('#dashboardPage h2')];
+ const headingMap=[t.year,t.status,t.funding,t.category,t.balance,t.recent,t.alerts];
+ headings.forEach((el,i)=>{if(headingMap[i])el.textContent=headingMap[i];});
+ const labels=[...document.querySelectorAll('.kpi-label')],values=[t.total,t.consumption,t.late,t.done,t.blocked,t.provisional,t.final];labels.forEach((el,i)=>{if(values[i])el.textContent=values[i];});
+ const search=$('#projectSearch');if(search)search.placeholder=t.search;
+ const year=$('#yearSearch'),state=$('#statusSearch'),cat=$('#categorySearch');
+ if(year&&year.options[0])year.options[0].textContent=t.allYears;if(state&&state.options[0])state.options[0].textContent=t.allStates;if(cat&&cat.options[0])cat.options[0].textContent=t.allCategories;
+ const newBtn=$('#newProjectBtn');if(newBtn)newBtn.textContent='+ '+t.newProject;
+ const loginTitle=$('#loginView h1');if(loginTitle)loginTitle.textContent=t.loginTitle;
+ const loginSub=$('#loginView p');if(loginSub)loginSub.textContent=t.loginSub;
+ const loginBtn=$('#loginForm button');if(loginBtn)loginBtn.textContent=t.login;
+ localStorage.setItem('pm-language',currentLang);
+}
 function showLogin(){$('#loginView').classList.remove('hidden');$('#appView').classList.add('hidden');}
 function showApp(){$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');$('#userLabel').textContent=currentUser.name+' · '+currentUser.role;$('#welcome').textContent='Connecté : '+currentUser.name;$('#usersNav').classList.toggle('hidden',currentUser.role!=='admin');}
 function contractEnd(p){if(!p.start_date||!p.duration_months)return null;const d=new Date(String(p.start_date).slice(0,10)+'T00:00:00');if(isNaN(d))return null;d.setMonth(d.getMonth()+Number(p.duration_months));return d;}
@@ -132,6 +156,7 @@ async function openProject(id){try{activeProjectId=id;const p=await api('/projec
 async function loadAssignees(){const d=await api('/assignees');$('#principalSelect').innerHTML='<option value="">Sélectionner un responsable</option>'+d.items.map(x=>'<option value="'+x.id+'">'+esc(x.display_name)+' — '+esc(x.role)+'</option>').join('');}
 async function loadUsers(){const d=await api('/users');$('#usersList').innerHTML='<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Actif</th></tr></thead><tbody>'+d.items.map(x=>'<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.role)+'</td><td>'+(x.is_active?'Oui':'Non')+'</td></tr>').join('')+'</tbody></table></div>';}
 function nav(page){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$('#'+page+'Page').classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('#pageTitle').textContent=({dashboard:'Tableau de bord',projects:'Projets',users:'Utilisateurs'}[page]||page);if(page==='projects')loadProjects().catch(e=>alert(e.message));if(page==='users')loadUsers().catch(e=>alert(e.message));}
+$('#languageSwitch').value=localStorage.getItem('pm-language')||'fr';applyLanguage($('#languageSwitch').value);$('#languageSwitch').addEventListener('change',e=>applyLanguage(e.target.value));
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#loginError').textContent='';const f=new FormData(e.currentTarget);try{const d=await api('/auth/login',{method:'POST',body:JSON.stringify({username:f.get('username'),password:f.get('password')})});currentUser=d.user;showApp();nav('dashboard');await loadDashboard();}catch(x){$('#loginError').textContent=x.message;}});
 $('#logoutBtn').addEventListener('click',async()=>{await api('/auth/logout',{method:'POST'}).catch(()=>{});currentUser=null;showLogin();});
 document.querySelectorAll('.nav').forEach(x=>x.addEventListener('click',()=>nav(x.dataset.page)));document.querySelectorAll('[data-goto]').forEach(x=>x.addEventListener('click',()=>nav(x.dataset.goto)));
