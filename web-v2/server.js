@@ -11,7 +11,34 @@ app.use(helmet({contentSecurityPolicy:false}));
 app.use(express.json({limit:'1mb'}));app.use(cookieParser());
 app.use(express.static(path.join(__dirname,'public')));
 function addMonthsISO(value,months){if(!value)return null;const m=String(value).slice(0,10).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);if(!m)return null;const first=new Date(Number(m[1]),Number(m[2])-1,1,12);first.setMonth(first.getMonth()+Number(months||0));const last=new Date(first.getFullYear(),first.getMonth()+1,0,12).getDate();first.setDate(Math.min(Number(m[3]),last));return first.getFullYear()+'-'+String(first.getMonth()+1).padStart(2,'0')+'-'+String(first.getDate()).padStart(2,'0');}
-function closeoutInfo(p){const legacy=p.legacy_payload||{},type=p.procedure_type||legacy.type_procedure||'',provisional=p.provisional_reception_date||legacy.date_reception_provisoire||null;const raw=p.warranty_months??legacy.duree_garantie_mois;const duration=raw==null||raw===''?(type==='marche'?12:0):Math.max(0,Number(raw)||0);const warrantyEnd=provisional&&duration>0?addMonthsISO(provisional,duration):null;const definitive=p.definitive_reception_date||legacy.date_reception_definitive||null,settlement=p.final_payment_date||legacy.date_reglement_definitif||null,closure=p.closure_date||legacy.date_cloture||null,deadline=definitive?addMonthsISO(definitive,3):null;const requiresProvisional=type==='marche'||duration>0;const now=new Date(),today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');let status='Procédure non renseignée',code='unknown';if(type){if(requiresProvisional&&!provisional){status='Réception provisoire à renseigner';code='missing_provisional';}else if(!definitive){if(warrantyEnd&&today<warrantyEnd){status='En période de garantie';code='warranty';}else{status='Réception définitive à enregistrer';code='awaiting_definitive';}}else if(warrantyEnd&&definitive<warrantyEnd){status='Réception définitive antérieure à la fin de garantie';code='invalid_definitive_date';}else if(closure&&settlement&&closure>=definitive&&closure>=settlement){status='Clôturé définitivement';code='closed';}else if(deadline&&today>deadline){status='Délai de clôture dépassé';code='overdue';}else if(closure){status='Clôture incomplète';code='incomplete';}else{status='À clôturer';code='to_close';}}return {procedure_type:type,provisional_reception_date:provisional,warranty_months:duration,definitive_reception_date:definitive,final_payment_date:settlement,closure_date:closure,warranty_end_date:warrantyEnd,closure_deadline:deadline,closure_status:status,closure_code:code,financially_closed:code==='closed'};}
+function closeoutInfo(p){
+ const legacy=p.legacy_payload||{},type=String(p.procedure_type||legacy.type_procedure||'').trim().toLowerCase();
+ const isConsultation=type.includes('consult'),isMarket=type.includes('march');
+ const provisional=p.provisional_reception_date||legacy.date_reception_provisoire||null;
+ const raw=p.warranty_months??legacy.duree_garantie_mois;
+ const duration=raw==null||raw===''?(isMarket?12:0):Math.max(0,Number(raw)||0);
+ const warrantyEnd=provisional&&duration>0?addMonthsISO(provisional,duration):null;
+ const definitive=p.definitive_reception_date||legacy.date_reception_definitive||null;
+ const settlement=p.final_payment_date||legacy.date_reglement_definitif||null;
+ const closure=p.closure_date||legacy.date_cloture||null;
+ const deadline=definitive?addMonthsISO(definitive,3):null;
+ const now=new Date(),today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+ let status='Procédure non renseignée',code='unknown';
+ if(isConsultation){
+  if(settlement&&closure&&closure>=settlement){status='Clôturée définitivement · consultation';code='closed';}
+  else if(settlement||closure){status='Clôture financière incomplète · consultation';code='incomplete';}
+  else{status='Règlement et clôture à renseigner';code='to_close';}
+ }else if(isMarket){
+  if(!provisional){status='Réception provisoire à renseigner';code='missing_provisional';}
+  else if(!definitive){if(warrantyEnd&&today<warrantyEnd){status='En période de garantie';code='warranty';}else{status='Réception définitive à enregistrer';code='awaiting_definitive';}}
+  else if(warrantyEnd&&definitive<warrantyEnd){status='Réception définitive antérieure à la fin de garantie';code='invalid_definitive_date';}
+  else if(closure&&settlement&&closure>=definitive&&closure>=settlement){status='Clôturé définitivement · marché';code='closed';}
+  else if(deadline&&today>deadline){status='Délai de clôture dépassé';code='overdue';}
+  else if(closure||settlement){status='Clôture incomplète';code='incomplete';}
+  else{status='À clôturer';code='to_close';}
+ }else if(type){status='Type de procédure à vérifier';code='unknown';}
+ return {procedure_type:type,provisional_reception_date:provisional,warranty_months:duration,definitive_reception_date:definitive,final_payment_date:settlement,closure_date:closure,warranty_end_date:warrantyEnd,closure_deadline:deadline,closure_status:status,closure_code:code,financially_closed:code==='closed'};
+}
 app.get('/api/health',async(_req,res)=>{try{await pool.query('SELECT 1');res.json({status:'ok',database:'connected',version:'2.0.0'});}catch(e){res.status(503).json({status:'error',database:'unavailable',message:e.message});}});
 app.post('/api/auth/login',async(req,res)=>{try{
  const username=String(req.body.username||'').trim(),password=String(req.body.password||'');
@@ -41,7 +68,7 @@ app.get('/api/dashboard',authRequired,async(_req,res)=>{try{
  LEFT JOIN LATERAL (SELECT MAX(followup_date) last_followup_date FROM project_followups WHERE project_id=p.id) f ON TRUE
  ORDER BY p.initial_programming_year NULLS LAST,p.project_code`);
  const items=q.rows.map(p=>{const closure=closeoutInfo(p),paid=Number(p.consumed_credits||0),cost=Number(p.updated_cost||0),done=p.operational_status==='completed';
- const provisional=done&&!closure.financially_closed?cost-paid:0,final=done&&closure.financially_closed?cost-paid:0;
+ const provisional=done&&!closure.financially_closed?cost-paid:0,final=done&&closure.financially_closed?Number(p.realized_resources||0)-paid:0;
  return {...p,...closure,provisional_balance:provisional,final_residual:final,provisional_balance_raw:cost-paid};});
  const total=items.length,sum=k=>items.reduce((a,p)=>a+Number(p[k]||0),0);
  res.json({items,summary:{total,completed:items.filter(p=>p.operational_status==='completed').length,blocked:items.filter(p=>p.operational_status==='blocked').length,updated_budget:sum('updated_cost'),consumed_credits:sum('consumed_credits'),realized_resources:sum('realized_resources'),provisional_balance:sum('provisional_balance'),final_residual:sum('final_residual')}});
