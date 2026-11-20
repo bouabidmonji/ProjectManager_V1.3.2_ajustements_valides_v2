@@ -47,3 +47,23 @@ body.rtl{direction:rtl}body.rtl .sidebar{right:0;left:auto}body.rtl main{margin-
 .detail-section[hidden]{display:none!important}
 body.rtl .kpi-consumption-ring{right:auto;left:18px}
 @media(max-width:700px){.kpi-consumption-ring{right:10px;top:50px;width:52px;height:52px}body.rtl .kpi-consumption-ring{right:auto;left:10px}}
+
+/* Dashboard compact layout and KPI drill-down */
+.charts-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.charts-grid .wide-chart{grid-column:1/-1}
+.charts-grid .compact-chart{min-height:250px;padding:15px}
+.charts-grid .compact-chart .donut-host{min-height:175px}
+.kpi-click{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.kpi-click:hover,.kpi-click:focus-visible{transform:translateY(-2px);box-shadow:0 7px 20px #243a5318;outline:2px solid #8bb6d6;outline-offset:2px}
+.kpi-drilldown{background:#fff;border:1px solid #dfe7ef;border-radius:12px;padding:15px 18px;margin:-4px 0 18px;box-shadow:0 4px 14px #243a530b}
+.kpi-drilldown-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px solid #edf0f4}
+.kpi-drilldown-head b{display:block;color:#243b53}.kpi-drilldown-head small{display:block;color:#7b8999;margin-top:4px}
+.kpi-drilldown-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.kpi-drilldown-list button{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;text-align:left;background:#f7f9fb;padding:10px;border-radius:8px;color:#30475f}
+.kpi-drilldown-list button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi-drilldown-list button small{grid-column:1/-1;color:#77879a}
+.project-actions{display:flex;gap:6px}
+.icon-action{width:32px;height:32px;min-width:32px;padding:0;border:1px solid #dce5ee;border-radius:8px;background:#fff;color:#2c6c9d;font-size:17px;line-height:1}
+.icon-action:hover{background:#edf5fb}.icon-action.danger{color:#c34d4d}.icon-action.danger:hover{background:#fff0f0}
+@media(max-width:1050px){.charts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.charts-grid .wide-chart{grid-column:1/-1}}
+@media(max-width:700px){.charts-grid{grid-template-columns:1fr}.charts-grid .wide-chart{grid-column:auto}.kpi-drilldown-list{grid-template-columns:1fr}}
