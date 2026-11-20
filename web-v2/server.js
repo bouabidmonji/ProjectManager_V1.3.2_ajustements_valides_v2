@@ -19,7 +19,7 @@ function closeoutInfo(p){
  const duration=raw==null||raw===''?(isMarket?12:0):Math.max(0,Number(raw)||0);
  const warrantyEnd=provisional&&duration>0?addMonthsISO(provisional,duration):null;
  const definitive=p.definitive_reception_date||legacy.date_reception_definitive||null;
- const settlement=p.final_payment_date||legacy.date_reglement_definitif||p.last_payment_date||null;
+ const settlement=isConsultation?(p.last_payment_date||p.final_payment_date||legacy.date_reglement_definitif||null):(p.final_payment_date||legacy.date_reglement_definitif||p.last_payment_date||null);
  const closure=p.closure_date||legacy.date_cloture||null;
  const deadline=definitive?addMonthsISO(definitive,3):null;
  const now=new Date(),today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
@@ -60,7 +60,7 @@ app.get('/api/dashboard',authRequired,async(_req,res)=>{try{
  COALESCE(p.provisional_reception_date,NULLIF(p.legacy_payload->>'date_reception_provisoire','')::date) provisional_reception_date,
  COALESCE(p.warranty_months,NULLIF(p.legacy_payload->>'duree_garantie_mois','')::int) warranty_months,
  COALESCE(p.definitive_reception_date,NULLIF(p.legacy_payload->>'date_reception_definitive','')::date) definitive_reception_date,
- COALESCE(p.final_payment_date,NULLIF(p.legacy_payload->>'date_reglement_definitif','')::date, pay.last_payment_date) final_payment_date,
+ COALESCE(pay.last_payment_date,p.final_payment_date,NULLIF(p.legacy_payload->>'date_reglement_definitif','')::date) final_payment_date,
  COALESCE(p.closure_date,NULLIF(p.legacy_payload->>'date_cloture','')::date) closure_date,
  COALESCE(f.last_followup_date,p.last_update_date) last_followup_date
  FROM projects p
@@ -92,7 +92,7 @@ app.get('/api/projects/:id',authRequired,async(req,res)=>{try{
   pool.query("SELECT id,payment_date,amount,payment_reference,document_type,observation FROM project_payments WHERE project_id=$1 ORDER BY payment_date DESC,id DESC",[p.id]),
   pool.query("SELECT id,followup_date,physical_progress,consumed_credits,current_stage,operational_status,blocked_date,blockage_reason,corrective_action,planned_resumption_date,observations FROM project_followups WHERE project_id=$1 ORDER BY followup_date DESC,id DESC",[p.id])
  ]);
- const lastPayment=payments.rows.reduce((d,x)=>!d||String(x.payment_date)>String(d)?x.payment_date:d,null);res.json({...p,...closeoutInfo({...p,last_payment_date:lastPayment}),final_payment_date:p.final_payment_date||lastPayment,provisional_balance_raw:Number(p.updated_cost||0)-(payments.rowCount?payments.rows.reduce((a,x)=>a+Number(x.amount||0),0):Number(p.legacy_consumed_credits||0)),responsibilities:r.rows,history:h.rows,payments:payments.rows,followups:followups.rows,payments_total:payments.rows.reduce((a,x)=>a+Number(x.amount||0),0),has_payment_history:payments.rowCount>0});
+ const lastPayment=payments.rows.reduce((d,x)=>!d||String(x.payment_date)>String(d)?x.payment_date:d,null);res.json({...p,...closeoutInfo({...p,last_payment_date:lastPayment}),final_payment_date:String(p.procedure_type||p.legacy_payload?.type_procedure||'').toLowerCase().includes('consult')?(lastPayment||p.final_payment_date): (p.final_payment_date||lastPayment),provisional_balance_raw:Number(p.updated_cost||0)-(payments.rowCount?payments.rows.reduce((a,x)=>a+Number(x.amount||0),0):Number(p.legacy_consumed_credits||0)),responsibilities:r.rows,history:h.rows,payments:payments.rows,followups:followups.rows,payments_total:payments.rows.reduce((a,x)=>a+Number(x.amount||0),0),has_payment_history:payments.rowCount>0});
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger la fiche projet.'});}});
 app.put('/api/projects/:id/responsibilities',authRequired,allow('admin'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','surveyor','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
  await c.query('BEGIN');const p=await c.query('SELECT id FROM projects WHERE id=$1',[req.params.id]);if(!p.rowCount){await c.query('ROLLBACK');return res.status(404).json({error:'Projet introuvable.'});}
