@@ -26,9 +26,9 @@ function applyLanguage(lang){
  if(year&&year.options[0])year.options[0].textContent=t.allYears;if(state&&state.options[0])state.options[0].textContent=t.allStates;if(cat&&cat.options[0])cat.options[0].textContent=t.allCategories;if(dashYear&&dashYear.options[0])dashYear.options[0].textContent=t.allYears;
  const newBtn=$('#newProjectBtn');if(newBtn)newBtn.textContent='+ '+t.newProject;
  const loginTitle=$('#loginView h1');if(loginTitle)loginTitle.textContent=t.loginTitle;const loginSub=$('#loginView p');if(loginSub)loginSub.textContent=t.loginSub;const loginBtn=$('#loginForm button');if(loginBtn)loginBtn.textContent=t.login;
- const projectHeaders=ar?['الرمز','عنوان المشروع','السنة','الصنف','الكلفة المحينة','الإنجاز المادي','الوضعية','الملف']:['Code','Intitulé','Année','Catégorie','Coût actualisé','Avancement','État','Fiche'];
+ const projectHeaders=ar?['الرمز','عنوان المشروع','سنة البرمجة','الصنف','الكلفة المحينة','الإنجاز المادي','الوضعية','الملف']:['Code','Intitulé','Année de programmation','Catégorie','Coût actualisé','Avancement','État','Fiche'];
  document.querySelectorAll('#projectsPage thead th').forEach((el,i)=>{if(projectHeaders[i])el.textContent=projectHeaders[i];});
- const recentHeaders=ar?['الرمز','المشروع','السنة','نسبة التقدم','آخر تحيين']:['Code','Projet','Année','Avancement','Dernier suivi'];
+ const recentHeaders=ar?['الرمز','المشروع','سنة البرمجة','نسبة التقدم','آخر تحيين']:['Code','Projet','Année de programmation','Avancement','Dernier suivi'];
  document.querySelectorAll('#recentRows').forEach(()=>document.querySelectorAll('#dashboardPage .lower-grid thead th').forEach((el,i)=>{if(recentHeaders[i])el.textContent=recentHeaders[i];}));
  if(ar){set('#dashboardPage .eyebrow','متابعة الاستثمارات البلدية');set('#dashboardPage .dashboard-toolbar .muted','مؤشرات مستخرجة من البيانات المسجلة بقاعدة البيانات.');}
  else{set('#dashboardPage .eyebrow','PILOTAGE DES INVESTISSEMENTS');set('#dashboardPage .dashboard-toolbar .muted','Indicateurs calculés à partir des données enregistrées dans PostgreSQL.');}
@@ -53,7 +53,7 @@ function renderDashboard(){
  $('#kBlocked').textContent=blocked;$('#kLate').textContent=late.length;$('#kClosureOverdue').textContent=closureOverdue.length;
  $('#kProvisional').textContent=money(provisionalTotal);$('#kProvisionalSub').textContent=currentLang==='ar'?provisional.length+' مشروع منجز دون غلق نهائي':provisional.length+' projet(s) achevé(s) non clôturé(s)';
  $('#kFinalResidual').textContent=money(finalTotal);$('#kFinalSub').textContent=currentLang==='ar'?finalClosed.length+' مشروع مغلق نهائيا':finalClosed.length+' projet(s) clôturé(s) définitivement';
- renderCompletedBalances(rows);bindKpiDrilldowns();
+ bindKpiDrilldowns();
  renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);
 }
 function showKpiDetail(kind){
@@ -176,7 +176,7 @@ async function deleteProject(id){const p=allProjects.find(x=>String(x.id)===Stri
 function realizationPeriod(p){const start=p.start_date?String(p.start_date).slice(0,4):'';const end=p.provisional_reception_date?String(p.provisional_reception_date).slice(0,4):'';if(start&&end)return start===end?start:start+' – '+end;if(start)return (currentLang==='ar'?'منذ ':'Depuis ')+start+(currentLang==='ar'?' · قيد الإنجاز':' · en cours');return '—';}
 async function openProject(id,mode='edit'){
  try{
-  activeProjectId=id;const p=await api('/projects/'+encodeURIComponent(id));const role=currentUser.role,canAdmin=role==='admin',canTech=mode!=='view'&&(canAdmin||role==='technical'),canFinance=mode!=='view'&&(canAdmin||role==='finance');
+  activeProjectId=id;const p=await api('/projects/'+encodeURIComponent(id));const role=currentUser.role,canAdmin=role==='admin'&&mode!=='view',canReadAll=role==='admin'||role==='viewer',canTech=mode!=='view'&&(canAdmin||role==='technical'),canFinance=mode!=='view'&&(canAdmin||role==='finance');
   $('#detailTitle').textContent=p.title;$('#detailCode').textContent=p.project_code+' · '+(p.initial_programming_year||'Année non renseignée')+' · '+statusLabel(p.operational_status);
   const field=(label,value)=>'<div class="detail-field"><small>'+label+'</small><b>'+esc(value===null||value===undefined||value===''?'—':value)+'</b></div>';
   const categoryOptions=[...new Set(allProjects.map(x=>x.category).filter(Boolean).concat(p.category||[]))].sort((a,b)=>a.localeCompare(b,'fr'));const subcategoryOptions=[...new Set(allProjects.map(x=>x.subcategory).filter(Boolean).concat(p.subcategory||[]))].sort((a,b)=>a.localeCompare(b,'fr'));const techFields=[['category','Catégorie','select',p.category],['subcategory','Sous-catégorie','select',p.subcategory],['physical_progress','Avancement physique (%)','number',p.physical_progress],['operational_status','État opérationnel','select',p.operational_status],['current_stage','Étape actuelle','text',p.current_stage],['programming_date','Date de programmation','date',p.programming_date],['start_date','Date de démarrage','date',p.start_date],['duration_months','Durée contractuelle (mois)','number',p.duration_months],['blocked_date','Date du blocage','date',p.blocked_date],['blockage_reason','Motif du blocage','text',p.blockage_reason],['corrective_action','Action corrective','text',p.corrective_action],['planned_resumption_date','Reprise prévisionnelle','date',p.planned_resumption_date],['provisional_reception_date','Réception provisoire','date',p.provisional_reception_date],['warranty_months','Durée de garantie (mois)','number',p.warranty_months],['definitive_reception_date','Réception définitive','date',p.definitive_reception_date],['procedure_type','Type de procédure','select',p.procedure_type]];
@@ -194,10 +194,10 @@ async function openProject(id,mode='edit'){
  section.insertAdjacentHTML('beforeend','<h4>Responsabilités du projet · administration</h4>'+assignment('principal','Responsable principal',resp)+assignment('surveyor','Surveillant',surveyor));
 }
 const detailSections=[...$('#detailContent').querySelectorAll('.detail-section')];
-  const tabDefs=[{id:0,label:currentLang==='ar'?'نظرة عامة':'Vue générale',show:true},{id:1,label:currentLang==='ar'?'الملف الفني':'Fiche technique',show:canTech||role==='viewer'},{id:2,label:currentLang==='ar'?'الملف المالي':'Fiche financière',show:canFinance||role==='viewer'},{id:3,label:currentLang==='ar'?'السجل':'Historique',show:true}];
+  const tabDefs=[{id:0,label:currentLang==='ar'?'نظرة عامة':'Vue générale',show:true},{id:1,label:currentLang==='ar'?'الملف الفني':'Fiche technique',show:canTech||canReadAll},{id:2,label:currentLang==='ar'?'الملف المالي':'Fiche financière',show:canFinance||canReadAll},{id:3,label:currentLang==='ar'?'السجل':'Historique',show:true}];
   const tabBar=document.createElement('div');tabBar.className='detail-tabs';tabBar.innerHTML=tabDefs.filter(t=>t.show).map(t=>'<button type="button" class="detail-tab '+(t.id===0?'active':'')+'" data-detail-tab="'+t.id+'">'+t.label+'</button>').join('');
   $('#detailContent').prepend(tabBar);
-  detailSections.forEach((section,index)=>{section.dataset.detailSection=String(index);section.hidden=index!==0||(index===1&&!canTech&&role!=='viewer')||(index===2&&!canFinance&&role!=='viewer');});
+  detailSections.forEach((section,index)=>{section.dataset.detailSection=String(index);section.hidden=index!==0||(index===1&&!canTech&&!canReadAll)||(index===2&&!canFinance&&!canReadAll);});
   tabBar.querySelectorAll('[data-detail-tab]').forEach(btn=>btn.addEventListener('click',()=>{const target=Number(btn.dataset.detailTab);detailSections.forEach((section,index)=>section.hidden=index!==target||(index===1&&!canTech&&role!=='viewer')||(index===2&&!canFinance&&role!=='viewer'));tabBar.querySelectorAll('.detail-tab').forEach(x=>x.classList.toggle('active',x===btn));}));
   $('#detailDialog').showModal();
   document.querySelectorAll('.assignment-form').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());try{await api('/projects/'+activeProjectId+'/responsibilities',{method:'PUT',body:JSON.stringify({role:form.dataset.assignmentRole,user_id:Number(data.user_id)})});await loadDashboard();await openProject(activeProjectId);}catch(err){form.querySelector('.form-message').textContent=err.message;}}));
