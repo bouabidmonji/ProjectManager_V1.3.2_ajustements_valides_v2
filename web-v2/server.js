@@ -126,7 +126,7 @@ app.put('/api/projects/:id',authRequired,async(req,res)=>{const b=req.body||{},r
  const fields=keys.filter(k=>allowed.includes(k));if(!fields.length)return res.status(400).json({error:'Aucune donnée modifiable transmise.'});
  const c=await pool.connect();try{await c.query('BEGIN');
  const before=await c.query('SELECT * FROM projects WHERE id=$1 FOR UPDATE',[req.params.id]);if(!before.rowCount){await c.query('ROLLBACK');return res.status(404).json({error:'Projet introuvable.'});}
- const sets=[],vals=[],dateFields=new Set(['programming_date','start_date','blocked_date','planned_resumption_date','last_update_date','provisional_reception_date','definitive_reception_date','final_payment_date','closure_date']);for(const key of fields){let value=b[key];if(dateFields.has(key)&&value==='')value=null;vals.push(value);sets.push(key+'=
+ const sets=[],vals=[],dateFields=new Set(['programming_date','start_date','blocked_date','planned_resumption_date','last_update_date','provisional_reception_date','definitive_reception_date','final_payment_date','closure_date']);for(const key of fields){let value=b[key];if(dateFields.has(key)&&value==='')value=null;vals.push(value);sets.push(key+'=$'+vals.length+(dateFields.has(key)?'::date':''));}
  vals.push(req.params.id);
  const q=await c.query('UPDATE projects SET '+sets.join(',')+',updated_at=now() WHERE id=$'+vals.length+' RETURNING *',vals);
  await c.query("INSERT INTO project_history(project_id,user_id,event_type,summary,before_data,after_data) VALUES($1,$2,'project_updated',$3,$4,$5)",[req.params.id,req.user.id,'Modification par profil '+role,JSON.stringify(before.rows[0]),JSON.stringify(q.rows[0])]);
