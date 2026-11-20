@@ -46,15 +46,32 @@ function renderDashboard(){
  const provisional=rows.filter(p=>p.operational_status==='completed'&&!p.financially_closed);
  const finalClosed=rows.filter(p=>p.operational_status==='completed'&&p.financially_closed);
  const provisionalTotal=sum(provisional,'provisional_balance'),finalTotal=sum(finalClosed,'final_residual');
- const late=lateProjects(rows);
+ const late=lateProjects(rows),closureOverdue=rows.filter(p=>p.operational_status==='completed'&&p.closure_code==='overdue');
  $('#kTotal').textContent=total;$('#kTotalSub').textContent=year?'Programmés en '+year:'Toutes années confondues';
  $('#kDone').textContent=done;$('#kDoneSub').textContent=(currentLang==='ar'?'نسبة الإنجاز ':'Taux de réalisation ')+pct(total?done/total*100:0);$('#kDoneProgress').style.width=Math.min(100,total?done/total*100:0)+'%';
  $('#kConsumption').textContent=pct(rate);$('#kConsumptionSub').textContent=money(spent)+' / '+money(budget);$('#kConsumptionRing').innerHTML='<svg viewBox="0  0 52 52" aria-label="Taux de consommation '+pct(rate)+'"><circle cx="26" cy="26" r="21" fill="none" stroke="#edf1f5" stroke-width="5"/><circle class="consumption-ring-value" cx="26" cy="26" r="21" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" transform="rotate(-90 26 26)" stroke-dasharray="0 132" data-value="'+(Math.min(100,rate)/100*132)+'"/><text x="26" y="29" text-anchor="middle">'+Math.round(rate)+'%</text></svg>';requestAnimationFrame(()=>{const ring=$('#kConsumptionRing .consumption-ring-value');if(ring)ring.setAttribute('stroke-dasharray',ring.dataset.value+' 132');});
- $('#kBlocked').textContent=blocked;$('#kLate').textContent=late.length;
+ $('#kBlocked').textContent=blocked;$('#kLate').textContent=late.length;$('#kClosureOverdue').textContent=closureOverdue.length;
  $('#kProvisional').textContent=money(provisionalTotal);$('#kProvisionalSub').textContent=currentLang==='ar'?provisional.length+' مشروع منجز دون غلق نهائي':provisional.length+' projet(s) achevé(s) non clôturé(s)';
  $('#kFinalResidual').textContent=money(finalTotal);$('#kFinalSub').textContent=currentLang==='ar'?finalClosed.length+' مشروع مغلق نهائيا':finalClosed.length+' projet(s) clôturé(s) définitivement';
- renderCompletedBalances(rows);
+ renderCompletedBalances(rows);bindKpiDrilldowns();
  renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);
+}
+function showKpiDetail(kind){
+ const rows=dashboardSubset||[];let title='',items=[];
+ if(kind==='late'){title='Projets en retard';items=lateProjects(rows);}
+ if(kind==='blocked'){title='Projets bloqués';items=rows.filter(p=>p.operational_status==='blocked');}
+ if(kind==='provisional'){title='Projets avec solde provisoire';items=rows.filter(p=>p.operational_status==='completed'&&!p.financially_closed);}
+ if(kind==='final'){title='Projets avec reliquat définitif';items=rows.filter(p=>p.operational_status==='completed'&&p.financially_closed);}
+ if(kind==='closure'){title='Projets dont le délai de clôture est dépassé';items=rows.filter(p=>p.operational_status==='completed'&&p.closure_code==='overdue');}
+ const host=$('#kpiDrilldown');if(!host)return;
+ host.innerHTML='<div class="kpi-drilldown-head"><div><b>'+esc(title)+'</b><small>'+items.length+' projet(s) · '+money(sum(items,kind==='provisional'?'provisional_balance':kind==='final'?'final_residual':'updated_cost'))+'</small></div><button type="button" class="detail-close" id="closeKpiDrilldown">Fermer</button></div><div class="kpi-drilldown-list">'+(items.length?items.map(p=>'<button type="button" data-kpi-project="'+p.id+'"><b>'+esc(p.project_code)+'</b><span>'+esc(p.title)+'</span><small>'+esc(p.closure_status||statusLabel(p.operational_status))+' · '+money(kind==='provisional'?p.provisional_balance:kind==='final'?p.final_residual:p.updated_cost)+'</small></button>').join(''):'<p class="muted">Aucun projet correspondant.</p>')+'</div>';
+ host.classList.remove('hidden');host.scrollIntoView({behavior:'smooth',block:'nearest'});
+ $('#closeKpiDrilldown').onclick=()=>host.classList.add('hidden');
+ host.querySelectorAll('[data-kpi-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.kpiProject)));
+}
+function bindKpiDrilldowns(){
+ const map={kpiLate:'late',kpiBlocked:'blocked',kpiProvisional:'provisional',kpiFinal:'final',kpiClosureOverdue:'closure'};
+ for(const [id,kind] of Object.entries(map)){const el=$('#'+id);if(!el)continue;el.onclick=()=>showKpiDetail(kind);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showKpiDetail(kind);}};}
 }
 function renderYearChart(){
  const years=[...new Set(allProjects.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
