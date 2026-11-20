@@ -39,6 +39,7 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.
 5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer l'historique et les responsabilités organisationnelles.
 6. Exécuter `schema-profiles-finance.sql` pour installer les profils `admin`, `technical`, `finance` et `viewer`.
+7. Exécuter `schema-responsibility-surveyor.sql` pour autoriser l'affectation d'un surveillant aux projets (mise à jour de novembre 2026).
 6. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"

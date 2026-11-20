@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS project_responsibilities (
  id BIGSERIAL PRIMARY KEY,
  project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
  user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
- responsibility_role TEXT NOT NULL CHECK (responsibility_role IN ('principal','technical','finance','procurement','gis')),
+ responsibility_role TEXT NOT NULL CHECK (responsibility_role IN ('principal','surveyor','technical','finance','procurement','gis')),
  assigned_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
  assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
  active BOOLEAN NOT NULL DEFAULT TRUE,

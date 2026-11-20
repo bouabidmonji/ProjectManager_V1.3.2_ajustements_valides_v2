@@ -67,3 +67,16 @@ body.rtl .kpi-consumption-ring{right:auto;left:18px}
 .icon-action:hover{background:#edf5fb}.icon-action.danger{color:#c34d4d}.icon-action.danger:hover{background:#fff0f0}
 @media(max-width:1050px){.charts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.charts-grid .wide-chart{grid-column:1/-1}}
 @media(max-width:700px){.charts-grid{grid-template-columns:1fr}.charts-grid .wide-chart{grid-column:auto}.kpi-drilldown-list{grid-template-columns:1fr}}
+
+/* Dashboard: two analytical charts in the first row, three distribution charts below */
+.charts-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
+.charts-grid>.wide-chart,.charts-grid>.trend-panel{grid-column:span 3;min-width:0}
+.charts-grid>.compact-chart,.charts-grid>article:not(.wide-chart):not(.trend-panel){grid-column:span 2;min-width:0}
+.charts-grid>.wide-chart{min-height:290px}
+.charts-grid>.trend-panel{min-height:290px;margin:0}
+.category-row{--category-color:#397ca9}
+.category-row .category-name:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--category-color);margin-inline-end:7px}
+.category-row .bar-allocated{background:var(--category-color)}
+.category-row .category-values b{color:var(--category-color)}
+@media(max-width:1050px){.charts-grid>.wide-chart,.charts-grid>.trend-panel{grid-column:span 3}.charts-grid>.compact-chart,.charts-grid>article:not(.wide-chart):not(.trend-panel){grid-column:span 3}}
+@media(max-width:700px){.charts-grid>.wide-chart,.charts-grid>.trend-panel,.charts-grid>.compact-chart,.charts-grid>article:not(.wide-chart):not(.trend-panel){grid-column:1/-1}}

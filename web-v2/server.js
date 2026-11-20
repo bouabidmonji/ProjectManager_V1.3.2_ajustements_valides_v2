@@ -19,7 +19,7 @@ function closeoutInfo(p){
  const duration=raw==null||raw===''?(isMarket?12:0):Math.max(0,Number(raw)||0);
  const warrantyEnd=provisional&&duration>0?addMonthsISO(provisional,duration):null;
  const definitive=p.definitive_reception_date||legacy.date_reception_definitive||null;
- const settlement=p.final_payment_date||legacy.date_reglement_definitif||null;
+ const settlement=isConsultation?(p.last_payment_date||p.final_payment_date||legacy.date_reglement_definitif||null):(p.final_payment_date||legacy.date_reglement_definitif||p.last_payment_date||null);
  const closure=p.closure_date||legacy.date_cloture||null;
  const deadline=definitive?addMonthsISO(definitive,3):null;
  const now=new Date(),today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
@@ -60,11 +60,11 @@ app.get('/api/dashboard',authRequired,async(_req,res)=>{try{
  COALESCE(p.provisional_reception_date,NULLIF(p.legacy_payload->>'date_reception_provisoire','')::date) provisional_reception_date,
  COALESCE(p.warranty_months,NULLIF(p.legacy_payload->>'duree_garantie_mois','')::int) warranty_months,
  COALESCE(p.definitive_reception_date,NULLIF(p.legacy_payload->>'date_reception_definitive','')::date) definitive_reception_date,
- COALESCE(p.final_payment_date,NULLIF(p.legacy_payload->>'date_reglement_definitif','')::date) final_payment_date,
+ COALESCE(pay.last_payment_date,p.final_payment_date,NULLIF(p.legacy_payload->>'date_reglement_definitif','')::date) final_payment_date,
  COALESCE(p.closure_date,NULLIF(p.legacy_payload->>'date_cloture','')::date) closure_date,
  COALESCE(f.last_followup_date,p.last_update_date) last_followup_date
  FROM projects p
- LEFT JOIN LATERAL (SELECT SUM(amount) paid_total FROM project_payments WHERE project_id=p.id) pay ON TRUE
+ LEFT JOIN LATERAL (SELECT SUM(amount) paid_total,MAX(payment_date) last_payment_date FROM project_payments WHERE project_id=p.id) pay ON TRUE
  LEFT JOIN LATERAL (SELECT MAX(followup_date) last_followup_date FROM project_followups WHERE project_id=p.id) f ON TRUE
  ORDER BY p.initial_programming_year NULLS LAST,p.project_code`);
  const items=q.rows.map(p=>{const closure=closeoutInfo(p),paid=Number(p.consumed_credits||0),cost=Number(p.updated_cost||0),done=p.operational_status==='completed';
@@ -92,9 +92,9 @@ app.get('/api/projects/:id',authRequired,async(req,res)=>{try{
   pool.query("SELECT id,payment_date,amount,payment_reference,document_type,observation FROM project_payments WHERE project_id=$1 ORDER BY payment_date DESC,id DESC",[p.id]),
   pool.query("SELECT id,followup_date,physical_progress,consumed_credits,current_stage,operational_status,blocked_date,blockage_reason,corrective_action,planned_resumption_date,observations FROM project_followups WHERE project_id=$1 ORDER BY followup_date DESC,id DESC",[p.id])
  ]);
- res.json({...p,...closeoutInfo(p),provisional_balance_raw:Number(p.updated_cost||0)-(payments.rowCount?payments.rows.reduce((a,x)=>a+Number(x.amount||0),0):Number(p.legacy_consumed_credits||0)),responsibilities:r.rows,history:h.rows,payments:payments.rows,followups:followups.rows,payments_total:payments.rows.reduce((a,x)=>a+Number(x.amount||0),0),has_payment_history:payments.rowCount>0});
+ const lastPayment=payments.rows.reduce((d,x)=>!d||String(x.payment_date)>String(d)?x.payment_date:d,null);res.json({...p,...closeoutInfo({...p,last_payment_date:lastPayment}),final_payment_date:String(p.procedure_type||p.legacy_payload?.type_procedure||'').toLowerCase().includes('consult')?(lastPayment||p.final_payment_date): (p.final_payment_date||lastPayment),provisional_balance_raw:Number(p.updated_cost||0)-(payments.rowCount?payments.rows.reduce((a,x)=>a+Number(x.amount||0),0):Number(p.legacy_consumed_credits||0)),responsibilities:r.rows,history:h.rows,payments:payments.rows,followups:followups.rows,payments_total:payments.rows.reduce((a,x)=>a+Number(x.amount||0),0),has_payment_history:payments.rowCount>0});
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger la fiche projet.'});}});
-app.put('/api/projects/:id/responsibilities',authRequired,allow('admin'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
+app.put('/api/projects/:id/responsibilities',authRequired,allow('admin'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','surveyor','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
  await c.query('BEGIN');const p=await c.query('SELECT id FROM projects WHERE id=$1',[req.params.id]);if(!p.rowCount){await c.query('ROLLBACK');return res.status(404).json({error:'Projet introuvable.'});}
  const u=await c.query('SELECT id FROM app_users WHERE id=$1 AND is_active=TRUE',[userId]);if(!u.rowCount){await c.query('ROLLBACK');return res.status(400).json({error:'Utilisateur absent ou inactif.'});}
  const prior=await c.query('SELECT user_id FROM project_responsibilities WHERE project_id=$1 AND responsibility_role=$2 AND active=TRUE',[p.rows[0].id,role]);
@@ -117,9 +117,9 @@ app.post('/api/projects',authRequired,allow('admin'),async(req,res)=>{const b=re
  await c.query('COMMIT');res.status(201).json({id,project_code:code});
  }catch(e){await c.query('ROLLBACK');console.error(e);res.status(500).json({error:'Création impossible.'});}finally{c.release();}});
 app.put('/api/projects/:id',authRequired,async(req,res)=>{const b=req.body||{},role=req.user.role;
- const technical=['physical_progress','operational_status','current_stage','programming_date','start_date','duration_months','blocked_date','blockage_reason','corrective_action','planned_resumption_date','last_update_date','provisional_reception_date','warranty_months' ,'definitive_reception_date'];
+ const technical=['category','subcategory','physical_progress','operational_status','current_stage','programming_date','start_date','duration_months','blocked_date','blockage_reason','corrective_action','planned_resumption_date','last_update_date','provisional_reception_date','warranty_months' ,'definitive_reception_date'];
  const finance=['updated_cost','self_funding','loan','exceptional_aid','unassigned_aid','assigned_aid','other_funding','realized_resources','final_payment_date','closure_date'];
- const allowed=role==='admin'?[...technical,...finance,'title','category','procedure_type']:role==='technical'?technical:role==='finance'?finance:[];
+ const allowed=role==='admin'?[...technical,...finance,'title','procedure_type']:role==='technical'?technical:role==='finance'?finance:[];
  if(!allowed.length)return res.status(403).json({error:'Profil en lecture seule.'});
  const keys=Object.keys(b);const denied=keys.filter(k=>!allowed.includes(k));
  if(denied.length)return res.status(403).json({error:'Votre profil ne peut pas modifier : '+denied.join(', ')});
