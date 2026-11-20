@@ -149,15 +149,6 @@ function showChartDetail(panel,key,value,label){
  host.classList.remove('hidden');host.querySelector('.detail-close').onclick=()=>host.classList.add('hidden');
  host.querySelectorAll('[data-open-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.openProject)));
 }
-function renderCompletedBalances(rows){
- const completed=rows.filter(p=>p.operational_status==='completed');
- const overdue=completed.filter(p=>p.closure_code==='overdue');
- const provisional=completed.filter(p=>!p.financially_closed),closed=completed.filter(p=>p.financially_closed);
- $('#balanceOverdueCount').textContent=overdue.length;$('#balanceProvisionalTotal').textContent=money(sum(provisional,'provisional_balance'));$('#balanceFinalTotal').textContent=money(sum(closed,'final_residual'));
- $('#completedBalanceRows').innerHTML=completed.length?completed.map(p=>'<tr><td><button class="link" data-open-project="'+p.id+'">'+esc(p.project_code)+' · '+esc(p.title)+'</button></td><td>'+(p.initial_programming_year||'—')+'</td><td>'+esc(p.procedure_type||'—')+'</td><td>'+(p.closure_status||'À renseigner')+'</td><td>'+money(p.updated_cost)+'</td><td>'+money(p.consumed_credits)+'</td><td>'+money(p.provisional_balance)+'</td><td>'+(p.financially_closed?money(p.final_residual):'—')+'</td></tr>').join(''):'<tr><td colspan="8" class="muted">Aucun projet achevé pour la période sélectionnée.</td></tr>';
- $('#balanceCountLabel').textContent=completed.length+' projet(s) achevé(s) · '+overdue.length+' alerte(s) calculable(s) · '+provisional.length+' solde(s) provisoire(s) · '+closed.length+' reliquat(s) définitif(s).';
- document.querySelectorAll('#completedBalanceRows [data-open-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.openProject)));
-}
 function renderRecent(rows){
  const recent=[...rows].filter(p=>p.last_followup_date).sort((a,b)=>String(b.last_followup_date).localeCompare(String(a.last_followup_date))).slice(0,7);
  $('#recentRows').innerHTML=recent.length?recent.map(p=>'<tr><td><b>'+esc(p.project_code)+'</b></td><td>'+esc(p.title)+'</td><td>'+(p.initial_programming_year||'—')+'</td><td>'+Number(p.physical_progress||0).toFixed(1)+' %</td><td>'+dateFR(p.last_followup_date)+'</td></tr>').join(''):'<tr><td colspan="5" class="muted">Aucun suivi historisé disponible.</td></tr>';
@@ -198,7 +189,7 @@ const detailSections=[...$('#detailContent').querySelectorAll('.detail-section')
   const tabBar=document.createElement('div');tabBar.className='detail-tabs';tabBar.innerHTML=tabDefs.filter(t=>t.show).map(t=>'<button type="button" class="detail-tab '+(t.id===0?'active':'')+'" data-detail-tab="'+t.id+'">'+t.label+'</button>').join('');
   $('#detailContent').prepend(tabBar);
   detailSections.forEach((section,index)=>{section.dataset.detailSection=String(index);section.hidden=index!==0||(index===1&&!canTech&&!canReadAll)||(index===2&&!canFinance&&!canReadAll);});
-  tabBar.querySelectorAll('[data-detail-tab]').forEach(btn=>btn.addEventListener('click',()=>{const target=Number(btn.dataset.detailTab);detailSections.forEach((section,index)=>section.hidden=index!==target||(index===1&&!canTech&&role!=='viewer')||(index===2&&!canFinance&&role!=='viewer'));tabBar.querySelectorAll('.detail-tab').forEach(x=>x.classList.toggle('active',x===btn));}));
+  tabBar.querySelectorAll('[data-detail-tab]').forEach(btn=>btn.addEventListener('click',()=>{const target=Number(btn.dataset.detailTab);detailSections.forEach((section,index)=>section.hidden=index!==target||(index===1&&!canTech&&!canReadAll)||(index===2&&!canFinance&&!canReadAll));tabBar.querySelectorAll('.detail-tab').forEach(x=>x.classList.toggle('active',x===btn));}));
   $('#detailDialog').showModal();
   document.querySelectorAll('.assignment-form').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());try{await api('/projects/'+activeProjectId+'/responsibilities',{method:'PUT',body:JSON.stringify({role:form.dataset.assignmentRole,user_id:Number(data.user_id)})});await loadDashboard();await openProject(activeProjectId);}catch(err){form.querySelector('.form-message').textContent=err.message;}}));
   document.querySelectorAll('.profile-edit[data-edit-role]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());for(const k of Object.keys(data))if(data[k]==='')data[k]=null;for(const [k,v] of Object.entries(data))if(form.elements[k]?.type==='number'&&v!==null)data[k]=Number(v);try{await api('/projects/'+activeProjectId,{method:'PUT',body:JSON.stringify(data)});await loadDashboard();await openProject(activeProjectId);}catch(err){form.querySelector('.form-message').textContent=err.message;}}));
