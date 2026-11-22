@@ -19,8 +19,8 @@ function applyLanguage(lang){
  const set=(sel,value)=>{const el=$(sel);if(el)el.textContent=value;};
  const navs=document.querySelectorAll('.nav');if(navs[0])navs[0].textContent=t.dashboard;if(navs[1])navs[1].textContent=t.projects;if(navs[2])navs[2].textContent=t.users;
  set('#languageCaption',t.language);set('#logoutBtn',t.logout);
- const headings=[...document.querySelectorAll('#dashboardPage h2')],headingMap=[t.year,t.status,t.funding,t.category,(ar?'تطور الاعتمادات المخصصة حسب الصنف':'Évolution des crédits alloués par catégorie'),t.recent,t.alerts];headings.forEach((el,i)=>{if(headingMap[i])el.textContent=headingMap[i];});
- const labels=[...document.querySelectorAll('.kpi-label')],values=[t.total,t.consumption,t.closureOverdue,t.late,t.done,t.blocked,t.provisional,t.final];labels.forEach((el,i)=>{if(values[i])el.textContent=values[i];});
+ const headings=[...document.querySelectorAll('#dashboardPage h2')],headingMap=[t.year,(ar?'تطور الاعتمادات المخصصة حسب الصنف':'Évolution des crédits alloués par catégorie'),(ar?'الحالة التشغيلية للمشاريع':'État opérationnel des projets'),(ar?'التوزيع حسب مصادر التمويل':'Répartition par source de financement'),(ar?'الاعتمادات المخصصة والمستهلكة حسب الصنف':'Crédits alloués et consommés par catégorie'),t.recent,t.alerts];headings.forEach((el,i)=>{if(headingMap[i])el.textContent=headingMap[i];});
+ const labels=[...document.querySelectorAll('.kpi-label')],values=[t.total,t.done,t.late,t.blocked,t.closureOverdue,t.consumption,t.provisional,t.final];labels.forEach((el,i)=>{if(values[i])el.textContent=values[i];});
  const search=$('#projectSearch');if(search)search.placeholder=t.search;
  const year=$('#yearSearch'),state=$('#statusSearch'),cat=$('#categorySearch'),dashYear=$('#dashboardYear');
  if(year&&year.options[0])year.options[0].textContent=t.allYears;if(state&&state.options[0])state.options[0].textContent=t.allStates;if(cat&&cat.options[0])cat.options[0].textContent=t.allCategories;if(dashYear&&dashYear.options[0])dashYear.options[0].textContent=t.allYears;
