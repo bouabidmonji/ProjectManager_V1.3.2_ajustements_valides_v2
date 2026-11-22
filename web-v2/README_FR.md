@@ -56,7 +56,8 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 ## Fonctions actuellement présentes dans le socle V2
 - Authentification avec cookie HTTP-only et expiration de session.
 - Contrôle des profils côté API : administrateur, service technique, service financier et consultation.
-- Tableau de bord avec indicateurs de consommation, retards, projets bloqués et clôture financière.
+- Tableau de bord avec deux rangées d'indicateurs (portefeuille puis finances), graphiques interactifs et évolution annuelle du nombre de projets et de l'avancement physique moyen.
+- Clôture financière dédiée aux consultations : saisie de la date du dernier paiement et de la date de clôture, avec contrôle chronologique et historisation.
 - Graphiques animés et interactifs ; répartition annuelle indépendante du filtre global.
 - Filtres de projets par année enregistrée, état opérationnel et catégorie.
 - Fiche projet avec données techniques, suivis, finances, paiements et historique.
@@ -67,7 +68,7 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 - API de consultation et modification des champs principaux.
 - Fiche projet consultable, responsabilités par domaine et historique des affectations.
 - Responsable principal obligatoire à la création d'un projet.
-- Gestion initiale des utilisateurs par API (création réservée à l'administrateur).
+- Gestion des comptes depuis « Comptes utilisateurs » (création réservée à l'administrateur) ; le surveillant est un utilisateur existant affecté au projet dans les responsabilités.
 - Journal d'audit minimal.
 - Contrôle de santé de l'API et de la connexion PostgreSQL.
 
