@@ -123,7 +123,7 @@ function renderTrend(){
  const cats=[...new Set(allProjects.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
  if(trendSelected===null)trendSelected=[...cats];
  if(!trendSelected.length&&cats.length)trendSelected=[...cats];
- $('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+(/infrastructure/i.test(c)?'infra':'')+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+( /infrastructure/i.test(c)?'#16877c':palette[i%palette.length])+'"></i>'+esc(c)+'</label>').join('');
+ $('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+''+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+( /infrastructure/i.test(c)?'#16877c':palette[i%palette.length])+'"></i>'+esc(c)+'</label>').join('');
  document.querySelectorAll('#trendCategoryFilter input').forEach(el=>el.addEventListener('change',()=>{trendSelected=[...document.querySelectorAll('#trendCategoryFilter input:checked')].map(x=>x.value);drawTrend(years,cats);}));
  drawTrend(years,cats);
 }
