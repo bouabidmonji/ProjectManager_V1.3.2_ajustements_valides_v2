@@ -114,15 +114,17 @@ app.post('/api/projects/:id/documents',authRequired,(req,res,next)=>documentUplo
  if(!req.file)return res.status(400).json({error:'Veuillez sélectionner un fichier.'});
  const title=String(b.title||'').trim(),reference=String(b.reference_number||'').trim()||null,date=String(b.document_date||'').trim()||null;
  if(!title||title.length>250||reference&&reference.length>120||date&&!/^\d{4}-\d{2}-\d{2}$/.test(date)){await fsp.unlink(req.file.path).catch(()=>{});return res.status(400).json({error:'Titre, référence ou date invalide.'});}
+ const c=await pool.connect();
  try{
-  if(!(await validDocumentSignature(req.file))){await fsp.unlink(req.file.path).catch(()=>{});return res.status(400).json({error:'Le contenu du fichier ne correspond pas à son format déclaré.'});}
-  const project=await pool.query('SELECT id FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!project.rowCount){await fsp.unlink(req.file.path).catch(()=>{});return res.status(404).json({error:'Projet introuvable.'});}
+  if(!(await validDocumentSignature(req.file))){await fsp.unlink(req.file.path).catch(()=>{});c.release();return res.status(400).json({error:'Le contenu du fichier ne correspond pas à son format déclaré.'});}
+  await c.query('BEGIN');
+  const project=await c.query('SELECT id FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!project.rowCount){await c.query('ROLLBACK');await fsp.unlink(req.file.path).catch(()=>{});c.release();return res.status(404).json({error:'Projet introuvable.'});}
   const pId=project.rows[0].id;
-  const q=await pool.query('INSERT INTO project_documents(project_id,section,document_type,title,reference_number,document_date,original_filename,stored_filename,mime_type,file_size,uploaded_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id,section,document_type,title,reference_number,document_date,original_filename,mime_type,file_size,created_at',[pId,section,type,title,reference,date,req.file.originalname,req.file.filename,req.file.mimetype,req.file.size,req.user.id]);
-  await pool.query("INSERT INTO project_history(project_id,user_id,event_type,summary,after_data) VALUES($1,$2,'document_uploaded',$3,$4)",[pId,req.user.id,'Document ajouté : '+title,JSON.stringify({document_id:q.rows[0].id,section,document_type:type,original_filename:req.file.originalname})]);
-  await pool.query("INSERT INTO audit_logs(user_id,action,entity_type,entity_id,details) VALUES($1,'upload','project_document',$2,$3)",[req.user.id,String(q.rows[0].id),JSON.stringify({project_id:pId,section,document_type:type})]);
-  res.status(201).json(q.rows[0]);
- }catch(e){await fsp.unlink(req.file.path).catch(()=>{});console.error(e);res.status(500).json({error:'Enregistrement du document impossible.'});}
+  const q=await c.query('INSERT INTO project_documents(project_id,section,document_type,title,reference_number,document_date,original_filename,stored_filename,mime_type,file_size,uploaded_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id,section,document_type,title,reference_number,document_date,original_filename,mime_type,file_size,created_at',[pId,section,type,title,reference,date,req.file.originalname,req.file.filename,req.file.mimetype,req.file.size,req.user.id]);
+  await c.query("INSERT INTO project_history(project_id,user_id,event_type,summary,after_data) VALUES($1,$2,'document_uploaded',$3,$4)",[pId,req.user.id,'Document ajouté : '+title,JSON.stringify({document_id:q.rows[0].id,section,document_type:type,original_filename:req.file.originalname})]);
+  await c.query("INSERT INTO audit_logs(user_id,action,entity_type,entity_id,details) VALUES($1,'upload','project_document',$2,$3)",[req.user.id,String(q.rows[0].id),JSON.stringify({project_id:pId,section,document_type:type})]);
+  await c.query('COMMIT');res.status(201).json(q.rows[0]);
+ }catch(e){await c.query('ROLLBACK').catch(()=>{});await fsp.unlink(req.file.path).catch(()=>{});console.error(e);res.status(500).json({error:'Enregistrement du document impossible.'});}finally{c.release();}
 });
 app.get('/api/projects/:id/documents/:documentId/download',authRequired,async(req,res)=>{
  try{const q=await pool.query('SELECT d.*,p.project_code FROM project_documents d JOIN projects p ON p.id=d.project_id WHERE d.id=$1 AND (d.project_id::text=$2 OR p.project_code=$2)',[req.params.documentId,req.params.id]);if(!q.rowCount)return res.status(404).json({error:'Document introuvable.'});const d=q.rows[0];if(!(req.user.role==='admin'||req.user.role==='viewer'||req.user.role===d.section))return res.status(403).json({error:'Accès refusé.'});const filePath=path.join(documentRoot,d.stored_filename);if(!fs.existsSync(filePath))return res.status(404).json({error:'Fichier absent du stockage. Vérifiez la sauvegarde des documents.'});res.setHeader('X-Content-Type-Options','nosniff');res.download(filePath,d.original_filename);
