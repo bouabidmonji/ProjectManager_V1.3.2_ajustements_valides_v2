@@ -2,7 +2,7 @@
 const $=s=>document.querySelector(s);
 let currentUser=null,activeProjectId=null,allProjects=[],dashboardSubset=[],trendSelected=null,currentLang='fr';
 const palette=['#2676a5','#e59b45','#8b78bd','#d46c72','#8b9baa','#c06a9b','#7e9b42','#4b9aaf','#b17c4d','#6b78a8'];
-function categoryColor(category){const value=String(category||'');let hash=0;for(let i=0;i<value.length;i++)hash=(hash*31+value.charCodeAt(i))>>>0;return palette[hash%palette.length];}
+function categoryColor(category,categories){const index=categories.indexOf(category);return palette[(index<0?0:index)%palette.length];}
 const money=v=>new Intl.NumberFormat('fr-TN',{style:'decimal',maximumFractionDigits:0}).format(Number(v||0))+' DT';
 const pct=v=>Number(v||0).toLocaleString('fr-TN',{maximumFractionDigits:1})+' %';
 const statusLabel=s=>currentLang==='ar'?({not_started:'لم ينطلق',in_progress:'في طور الإنجاز',blocked:'معطل / متوقف',completed:'منجز',cancelled:'ملغى'}[s]||s||'—'):({not_started:'Non démarré',in_progress:'En cours',blocked:'Bloqué / suspendu',completed:'Achevé',cancelled:'Annulé'}[s]||s||'—');
@@ -123,7 +123,7 @@ function renderTrend(){
  const cats=[...new Set(allProjects.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
  if(trendSelected===null)trendSelected=[...cats];
  if(!trendSelected.length&&cats.length)trendSelected=[...cats];
- $('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+''+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+( /infrastructure/i.test(c)?'#16877c':palette[i%palette.length])+'"></i>'+esc(c)+'</label>').join('');
+ $('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+''+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+( /infrastructure/i.test(c)?'#16877c':categoryColor(c,cats))+'"></i>'+esc(c)+'</label>').join('');
  document.querySelectorAll('#trendCategoryFilter input').forEach(el=>el.addEventListener('change',()=>{trendSelected=[...document.querySelectorAll('#trendCategoryFilter input:checked')].map(x=>x.value);drawTrend(years,cats);}));
  drawTrend(years,cats);
 }
@@ -135,7 +135,7 @@ function drawTrend(years,cats){
  const max=Math.max(1,...series.flatMap(s=>s.values.map(v=>v.amount)));
  const yPos=v=>t+ph-v/max*ph;
  const grid=[0,.25,.5,.75,1].map(x=>{const y=t+ph-x*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-10)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+money(max*x).replace(' DT','')+'</text>';}).join('');
- const lines=series.map((s,i)=>{const color=categoryColor(s.category);const points=s.values.map((v,j)=>({ ...v,x:l+(years.length===1?pw/2:j*pw/(years.length-1)),y:yPos(v.amount)}));const poly=points.map(p=>p.x+','+p.y).join(' ');return '<polyline points="'+poly+'" fill="none" stroke="'+color+'" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" class="animated-line"/>'+points.map(p=>'<circle class="trend-point" cx="'+p.x+'" cy="'+p.y+'" r="5" fill="'+color+'" data-trend-year="'+p.year+'" data-trend-category="'+esc(s.category)+'" tabindex="0"><title>'+esc(s.category)+' · '+p.year+' · '+p.items.length+' projet(s) · '+money(p.amount)+'</title></circle>').join('');}).join('');
+ const lines=series.map((s,i)=>{const color=categoryColor(s.category,cats);const points=s.values.map((v,j)=>({ ...v,x:l+(years.length===1?pw/2:j*pw/(years.length-1)),y:yPos(v.amount)}));const poly=points.map(p=>p.x+','+p.y).join(' ');return '<polyline points="'+poly+'" fill="none" stroke="'+color+'" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" class="animated-line"/>'+points.map(p=>'<circle class="trend-point" cx="'+p.x+'" cy="'+p.y+'" r="5" fill="'+color+'" data-trend-year="'+p.year+'" data-trend-category="'+esc(s.category)+'" tabindex="0"><title>'+esc(s.category)+' · '+p.year+' · '+p.items.length+' projet(s) · '+money(p.amount)+'</title></circle>').join('');}).join('');
  const labels=years.map((y,i)=>'<text x="'+(l+(years.length===1?pw/2:i*pw/(years.length-1)))+'" y="'+(h-15)+'" text-anchor="middle" class="axis-label">'+y+'</text>').join('');
  const legend=series.map(s=>'<span><i style="background:'+categoryColor(s.category)+'"></i>'+esc(s.category)+'</span>').join('');
  $('#allocationTrendChart').innerHTML='<div class="trend-legend">'+legend+'</div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="trend-svg">'+grid+lines+labels+'</svg></div>';
