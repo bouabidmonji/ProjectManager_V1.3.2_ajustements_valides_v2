@@ -100,3 +100,32 @@ body.rtl .kpi-consumption-ring{right:auto;left:18px}
 @media(max-width:1200px){.project-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:720px){.project-kpis,.finance-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:460px){.project-kpis,.finance-kpis{grid-template-columns:1fr}}
+
+
+/* Correctifs ergonomiques V2 : cartes KPI et disposition des graphiques */
+.kpi-groups .kpi{position:relative;display:block;min-width:0;min-height:128px;overflow:hidden;background:#fff;border:1px solid #e3e9f1;border-radius:13px;padding:18px 16px 16px 58px;box-shadow:0 3px 12px #243a5308}
+.kpi-groups .kpi strong{display:block;color:#1e2e42;font-size:29px;line-height:1.15;letter-spacing:-.035em;margin-top:12px}
+.kpi-groups .kpi .kpi-label{display:block;min-height:32px;line-height:1.35;color:#627287;font-size:12px;font-weight:700}
+.kpi-groups .kpi small{display:block;color:#78879a;font-size:11px;line-height:1.35;margin-top:6px}
+.kpi-groups .kpi-green{padding-right:92px}
+.kpi-groups .kpi-icon{position:absolute;left:16px;top:18px;width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#edf4f9;color:#327aa5;font-size:20px;font-weight:800}
+.kpi-groups .kpi-green .kpi-icon,.kpi-groups .kpi-teal .kpi-icon{background:#eaf5f1;color:#29966b}
+.kpi-groups .kpi-red .kpi-icon{background:#fff0ef;color:#d45e61}
+.kpi-groups .kpi-orange .kpi-icon{background:#fff5e9;color:#d68b3f}
+.kpi-groups .kpi-purple .kpi-icon{background:#f2effa;color:#8874b6}
+.kpi-groups .kpi-navy .kpi-icon{background:#edf1f6;color:#405b7a}
+.charts-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
+.charts-grid>.wide-chart,.charts-grid>.compact-chart{grid-column:span 2;grid-row:1;min-width:0}
+.charts-grid>.trend-panel,.charts-grid>article:not(.wide-chart):not(.trend-panel):not(.compact-chart){grid-column:span 3;grid-row:2;min-width:0}
+@media(max-width:1050px){
+ .charts-grid>.wide-chart,.charts-grid>.compact-chart,.charts-grid>.trend-panel,.charts-grid>article:not(.wide-chart):not(.trend-panel):not(.compact-chart){grid-column:span 3;grid-row:auto}
+}
+@media(max-width:720px){
+ .kpi-groups .kpi{min-height:120px;padding:14px 12px 14px 52px}
+ .kpi-groups .kpi strong{font-size:24px}
+ .kpi-groups .kpi-green{padding-right:76px}
+ .charts-grid>.wide-chart,.charts-grid>.compact-chart,.charts-grid>.trend-panel,.charts-grid>article:not(.wide-chart):not(.trend-panel):not(.compact-chart){grid-column:1/-1;grid-row:auto}
+}
+body.rtl .kpi-groups .kpi{padding-left:16px;padding-right:58px}
+body.rtl .kpi-groups .kpi-icon{left:auto;right:16px}
+body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
