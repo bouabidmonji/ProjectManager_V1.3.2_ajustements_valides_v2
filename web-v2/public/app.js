@@ -77,7 +77,7 @@ function renderYearChart(){
  const years=[...new Set(allProjects.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
  if(!years.length){$('#yearChart').innerHTML='<p class="muted">Aucune année de programmation renseignée.</p>';return;}
  const vals=years.map(y=>{const items=allProjects.filter(p=>Number(p.initial_programming_year)===y);const avg=items.length?items.reduce((n,p)=>n+Number(p.physical_progress||0),0)/items.length:0;return {year:y,count:items.length,budget:sum(items,'updated_cost'),progress:avg,items};});
- const max=Math.max(1,...vals.map(x=>x.count)),w=Math.max(560,years.length*105+120),h=270,l=55,r=55,t=30,b=48,pw=w-l-r,ph=h-t-b,bw=Math.min(34,pw/Math.max(1,years.length)*.42);
+ const max=Math.max(1,...vals.map(x=>x.count)),w=Math.max(590,years.length*105+150),h=270,l=55,r=82,t=30,b=48,pw=w-l-r,ph=h-t-b,bw=Math.min(34,pw/Math.max(1,years.length)*.42);
  const xAt=i=>l+(vals.length===1?pw/2:i*pw/(vals.length-1));
  const yCount=v=>t+ph-v/max*ph,yProgress=v=>t+ph-Math.max(0,Math.min(100,v))/100*ph;
  const grid=[0,.5,1].map(v=>{const y=t+ph-v*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-9)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+Math.round(max*v)+'</text><text x="'+(w-r+9)+'" y="'+(y+4)+'" class="axis-label">'+Math.round(v*100)+'%</text>';}).join('');
@@ -203,7 +203,25 @@ const detailSections=[...$('#detailContent').querySelectorAll('.detail-section')
  }catch(e){alert(e.message);}
 }
 async function loadAssignees(){const d=await api('/assignees');$('#principalSelect').innerHTML='<option value="">Sélectionner un responsable</option>'+d.items.map(x=>'<option value="'+x.id+'">'+esc(x.display_name)+' — '+esc(x.role)+'</option>').join('');}
-async function loadUsers(){const d=await api('/users');$('#usersList').innerHTML='<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Actif</th></tr></thead><tbody>'+d.items.map(x=>'<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.role)+'</td><td>'+(x.is_active?'Oui':'Non')+'</td></tr>').join('')+'</tbody></table></div>';$('#userCreateForm').onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.currentTarget).entries());try{await api('/users',{method:'POST',body:JSON.stringify(data)});$('#userCreateMessage').textContent='Compte créé.';e.currentTarget.reset();await loadUsers();}catch(err){$('#userCreateMessage').textContent=err.message;}};}
+async function loadUsers(){
+ const form=$('#userCreateForm'),host=$('#usersList'),message=$('#userCreateMessage');
+ if(!form.dataset.submitBound){
+  form.dataset.submitBound='1';
+  form.addEventListener('submit',async e=>{
+   e.preventDefault();
+   const currentForm=e.currentTarget,data=Object.fromEntries(new FormData(currentForm).entries());
+   message.textContent='';
+   try{
+    await api('/users',{method:'POST',body:JSON.stringify(data)});
+    message.textContent='Compte créé.';
+    currentForm.reset();
+    await loadUsers();
+   }catch(err){message.textContent=err.message;}
+  });
+ }
+ const d=await api('/users');
+ host.innerHTML='<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Actif</th></tr></thead><tbody>'+d.items.map(x=>'<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.role)+'</td><td>'+(x.is_active?'Oui':'Non')+'</td></tr>').join('')+'</tbody></table></div>';
+}
 function nav(page){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$('#'+page+'Page').classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('#pageTitle').textContent=({dashboard:translations[currentLang].dashboard,projects:translations[currentLang].projects,users:translations[currentLang].users}[page]||page);if(page==='projects')loadProjects().catch(e=>alert(e.message));if(page==='users')loadUsers().catch(e=>alert(e.message));}
 $('#languageSwitch').value=localStorage.getItem('pm-language')||'fr';applyLanguage($('#languageSwitch').value);$('#languageSwitch').addEventListener('change',e=>applyLanguage(e.target.value));
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#loginError').textContent='';const f=new FormData(e.currentTarget);try{const d=await api('/auth/login',{method:'POST',body:JSON.stringify({username:f.get('username'),password:f.get('password')})});currentUser=d.user;showApp();nav('dashboard');await loadDashboard();}catch(x){$('#loginError').textContent=x.message;}});
