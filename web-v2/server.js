@@ -1,7 +1,7 @@
 'use strict';
 require('dotenv').config();
-const express=require('express'),helmet=require('helmet'),cookieParser=require('cookie-parser');
-const bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),path=require('node:path');
+const express=require('express'),helmet=require('helmet'),cookieParser=require('cookie-parser'),multer=require('multer');
+const bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),path=require('node:path'),fs=require('node:fs'),fsp=fs.promises;
 const {randomUUID}=require('node:crypto');
 const {pool}=require('./db');
 const {authRequired,allow}=require('./auth');
@@ -10,6 +10,10 @@ app.disable('x-powered-by');
 app.use(helmet({contentSecurityPolicy:false}));
 app.use(express.json({limit:'1mb'}));app.use(cookieParser());
 app.use(express.static(path.join(__dirname,'public')));
+const documentRoot=path.resolve(__dirname,process.env.DOCUMENT_STORAGE_DIR||'storage/documents');
+fs.mkdirSync(documentRoot,{recursive:true});
+const documentUpload=multer({storage:multer.diskStorage({destination:(_req,_file,cb)=>cb(null,documentRoot),filename:(_req,file,cb)=>cb(null,randomUUID()+path.extname(file.originalname).toLowerCase())}),limits:{fileSize:20*1024*1024,files:1},fileFilter:(_req,file,cb)=>{const ext=path.extname(file.originalname).toLowerCase(),ok=(ext==='.pdf'&&file.mimetype==='application/pdf')||(['.jpg','.jpeg'].includes(ext)&&file.mimetype==='image/jpeg')||(ext==='.png'&&file.mimetype==='image/png');cb(ok?null:new Error('Format refusé. Formats autorisés : PDF, JPG, PNG.'),ok);}});
+async function validDocumentSignature(file){const h=await fsp.open(file.path,'r');try{const b=Buffer.alloc(8);await h.read(b,0,8,0);const ext=path.extname(file.originalname).toLowerCase();return ext==='.pdf'?b.subarray(0,5).toString()==='%PDF-':(['.jpg','.jpeg'].includes(ext)?b[0]===0xff&&b[1]===0xd8&&b[2]===0xff:ext==='.png'?b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):false);}finally{await h.close();}}
 function isoDate(value){
  if(!value)return null;
  if(value instanceof Date&&!Number.isNaN(value.getTime()))return value.toISOString().slice(0,10);
@@ -94,14 +98,36 @@ app.post('/api/projects/:id/consultation-closeout',authRequired,allow('admin','f
 app.get('/api/projects/:id',authRequired,async(req,res)=>{try{
  const q=await pool.query('SELECT * FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!q.rowCount)return res.status(404).json({error:'Projet introuvable.'});
  const p=q.rows[0];
- const [r,h,payments,followups]=await Promise.all([
+ const [r,h,payments,followups,documents]=await Promise.all([
   pool.query("SELECT pr.id,pr.responsibility_role,pr.user_id,u.display_name,u.username,pr.assigned_at FROM project_responsibilities pr JOIN app_users u ON u.id=pr.user_id WHERE pr.project_id=$1 AND pr.active=TRUE ORDER BY CASE pr.responsibility_role WHEN 'principal' THEN 0 ELSE 1 END,pr.responsibility_role,u.display_name",[p.id]),
   pool.query("SELECT h.id,h.event_type,h.summary,h.before_data,h.after_data,h.created_at,u.display_name FROM project_history h LEFT JOIN app_users u ON u.id=h.user_id WHERE h.project_id=$1 ORDER BY h.created_at DESC LIMIT 100",[p.id]),
   pool.query("SELECT id,payment_date,amount,payment_reference,document_type,observation FROM project_payments WHERE project_id=$1 ORDER BY payment_date DESC,id DESC",[p.id]),
-  pool.query("SELECT id,followup_date,physical_progress,consumed_credits,current_stage,operational_status,blocked_date,blockage_reason,corrective_action,planned_resumption_date,observations FROM project_followups WHERE project_id=$1 ORDER BY followup_date DESC,id DESC",[p.id])
+  pool.query("SELECT id,followup_date,physical_progress,consumed_credits,current_stage,operational_status,blocked_date,blockage_reason,corrective_action,planned_resumption_date,observations FROM project_followups WHERE project_id=$1 ORDER BY followup_date DESC,id DESC",[p.id]),
+  pool.query("SELECT d.id,d.section,d.document_type,d.title,d.reference_number,d.document_date,d.original_filename,d.mime_type,d.file_size,d.created_at,u.display_name uploaded_by FROM project_documents d LEFT JOIN app_users u ON u.id=d.uploaded_by WHERE d.project_id=$1 AND ($2 IN ('admin','viewer') OR d.section=$2) ORDER BY d.document_date DESC NULLS LAST,d.created_at DESC",[p.id,req.user.role])
  ]);
- const lastPayment=payments.rows.reduce((d,x)=>!d||String(x.payment_date)>String(d)?x.payment_date:d,null);res.json({...p,...closeoutInfo({...p,last_payment_date:lastPayment}),final_payment_date:String(p.procedure_type||p.legacy_payload?.type_procedure||'').toLowerCase().includes('consult')?(lastPayment||p.final_payment_date): (p.final_payment_date||lastPayment),provisional_balance_raw:Number(p.updated_cost||0)-(payments.rowCount?payments.rows.reduce((a,x)=>a+Number(x.amount||0),0):Number(p.legacy_consumed_credits||0)),responsibilities:r.rows,history:h.rows,payments:payments.rows,followups:followups.rows,payments_total:payments.rows.reduce((a,x)=>a+Number(x.amount||0),0),has_payment_history:payments.rowCount>0});
+ const lastPayment=payments.rows.reduce((d,x)=>!d||String(x.payment_date)>String(d)?x.payment_date:d,null);res.json({...p,...closeoutInfo({...p,last_payment_date:lastPayment}),final_payment_date:String(p.procedure_type||p.legacy_payload?.type_procedure||'').toLowerCase().includes('consult')?(lastPayment||p.final_payment_date): (p.final_payment_date||lastPayment),provisional_balance_raw:Number(p.updated_cost||0)-(payments.rowCount?payments.rows.reduce((a,x)=>a+Number(x.amount||0),0):Number(p.legacy_consumed_credits||0)),responsibilities:r.rows,history:h.rows,payments:payments.rows,followups:followups.rows,documents:documents.rows,payments_total:payments.rows.reduce((a,x)=>a+Number(x.amount||0),0),has_payment_history:payments.rowCount>0});
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger la fiche projet.'});}});
+app.post('/api/projects/:id/documents',authRequired,(req,res,next)=>documentUpload.single('file')(req,res,e=>{if(e)return res.status(e instanceof multer.MulterError?413:400).json({error:e.message||'Téléversement impossible.'});next();}),async(req,res)=>{
+ const b=req.body||{},section=String(b.section||''),type=String(b.document_type||''),role=req.user.role;
+ const allowedTypes={technical:['ordre_service','reception_provisoire','reception_definitive'],finance:['market_commission_pv']};
+ if(!['admin','technical','finance'].includes(role)||(section==='technical'&&!['admin','technical'].includes(role))||(section==='finance'&&!['admin','finance'].includes(role))||!allowedTypes[section]?.includes(type)){if(req.file)await fsp.unlink(req.file.path).catch(()=>{});return res.status(403).json({error:'Vous ne disposez pas des droits pour déposer ce document.'});}
+ if(!req.file)return res.status(400).json({error:'Veuillez sélectionner un fichier.'});
+ const title=String(b.title||'').trim(),reference=String(b.reference_number||'').trim()||null,date=String(b.document_date||'').trim()||null;
+ if(!title||title.length>250||reference&&reference.length>120||date&&!/^\d{4}-\d{2}-\d{2}$/.test(date)){await fsp.unlink(req.file.path).catch(()=>{});return res.status(400).json({error:'Titre, référence ou date invalide.'});}
+ try{
+  if(!(await validDocumentSignature(req.file))){await fsp.unlink(req.file.path).catch(()=>{});return res.status(400).json({error:'Le contenu du fichier ne correspond pas à son format déclaré.'});}
+  const project=await pool.query('SELECT id FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!project.rowCount){await fsp.unlink(req.file.path).catch(()=>{});return res.status(404).json({error:'Projet introuvable.'});}
+  const pId=project.rows[0].id;
+  const q=await pool.query('INSERT INTO project_documents(project_id,section,document_type,title,reference_number,document_date,original_filename,stored_filename,mime_type,file_size,uploaded_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id,section,document_type,title,reference_number,document_date,original_filename,mime_type,file_size,created_at',[pId,section,type,title,reference,date,req.file.originalname,req.file.filename,req.file.mimetype,req.file.size,req.user.id]);
+  await pool.query("INSERT INTO project_history(project_id,user_id,event_type,summary,after_data) VALUES($1,$2,'document_uploaded',$3,$4)",[pId,req.user.id,'Document ajouté : '+title,JSON.stringify({document_id:q.rows[0].id,section,document_type:type,original_filename:req.file.originalname})]);
+  await pool.query("INSERT INTO audit_logs(user_id,action,entity_type,entity_id,details) VALUES($1,'upload','project_document',$2,$3)",[req.user.id,String(q.rows[0].id),JSON.stringify({project_id:pId,section,document_type:type})]);
+  res.status(201).json(q.rows[0]);
+ }catch(e){await fsp.unlink(req.file.path).catch(()=>{});console.error(e);res.status(500).json({error:'Enregistrement du document impossible.'});}
+});
+app.get('/api/projects/:id/documents/:documentId/download',authRequired,async(req,res)=>{
+ try{const q=await pool.query('SELECT d.*,p.project_code FROM project_documents d JOIN projects p ON p.id=d.project_id WHERE d.id=$1 AND (d.project_id::text=$2 OR p.project_code=$2)',[req.params.documentId,req.params.id]);if(!q.rowCount)return res.status(404).json({error:'Document introuvable.'});const d=q.rows[0];if(!(req.user.role==='admin'||req.user.role==='viewer'||req.user.role===d.section))return res.status(403).json({error:'Accès refusé.'});const filePath=path.join(documentRoot,d.stored_filename);if(!fs.existsSync(filePath))return res.status(404).json({error:'Fichier absent du stockage. Vérifiez la sauvegarde des documents.'});res.setHeader('X-Content-Type-Options','nosniff');res.download(filePath,d.original_filename);
+ }catch(e){console.error(e);res.status(500).json({error:'Téléchargement impossible.'});}
+});
 app.put('/api/projects/:id/responsibilities',authRequired,allow('admin'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','surveyor','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
  await c.query('BEGIN');const p=await c.query('SELECT id FROM projects WHERE id=$1',[req.params.id]);if(!p.rowCount){await c.query('ROLLBACK');return res.status(404).json({error:'Projet introuvable.'});}
  const u=await c.query('SELECT id FROM app_users WHERE id=$1 AND is_active=TRUE',[userId]);if(!u.rowCount){await c.query('ROLLBACK');return res.status(400).json({error:'Utilisateur absent ou inactif.'});}
