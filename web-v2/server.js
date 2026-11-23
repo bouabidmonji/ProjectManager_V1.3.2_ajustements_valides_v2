@@ -116,9 +116,9 @@ app.post('/api/projects/:id/documents',authRequired,(req,res,next)=>documentUplo
  if(!title||title.length>250||reference&&reference.length>120||date&&!/^\d{4}-\d{2}-\d{2}$/.test(date)){await fsp.unlink(req.file.path).catch(()=>{});return res.status(400).json({error:'Titre, référence ou date invalide.'});}
  const c=await pool.connect();
  try{
-  if(!(await validDocumentSignature(req.file))){await fsp.unlink(req.file.path).catch(()=>{});c.release();return res.status(400).json({error:'Le contenu du fichier ne correspond pas à son format déclaré.'});}
+  if(!(await validDocumentSignature(req.file))){await fsp.unlink(req.file.path).catch(()=>{});return res.status(400).json({error:'Le contenu du fichier ne correspond pas à son format déclaré.'});}
   await c.query('BEGIN');
-  const project=await c.query('SELECT id FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!project.rowCount){await c.query('ROLLBACK');await fsp.unlink(req.file.path).catch(()=>{});c.release();return res.status(404).json({error:'Projet introuvable.'});}
+  const project=await c.query('SELECT id FROM projects WHERE id::text=$1 OR project_code=$1',[req.params.id]);if(!project.rowCount){await c.query('ROLLBACK');await fsp.unlink(req.file.path).catch(()=>{});return res.status(404).json({error:'Projet introuvable.'});}
   const pId=project.rows[0].id;
   const q=await c.query('INSERT INTO project_documents(project_id,section,document_type,title,reference_number,document_date,original_filename,stored_filename,mime_type,file_size,uploaded_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id,section,document_type,title,reference_number,document_date,original_filename,mime_type,file_size,created_at',[pId,section,type,title,reference,date,req.file.originalname,req.file.filename,req.file.mimetype,req.file.size,req.user.id]);
   await c.query("INSERT INTO project_history(project_id,user_id,event_type,summary,after_data) VALUES($1,$2,'document_uploaded',$3,$4)",[pId,req.user.id,'Document ajouté : '+title,JSON.stringify({document_id:q.rows[0].id,section,document_type:type,original_filename:req.file.originalname})]);
