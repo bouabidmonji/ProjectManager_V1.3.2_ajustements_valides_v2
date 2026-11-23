@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname,'public')));
 function isoDate(value){
  if(!value)return null;
  if(value instanceof Date&&!Number.isNaN(value.getTime()))return value.toISOString().slice(0,10);
- const raw=String(value).trim(),match=raw.match(/^(\\d{4}-\\d{2}-\\d{2})/);
+ const raw=String(value).trim(),match=raw.match(/^(\d{4}-\d{2}-\d{2})/);
  if(match)return match[1];
  const parsed=new Date(raw);return Number.isNaN(parsed.getTime())?null:parsed.toISOString().slice(0,10);
 }
