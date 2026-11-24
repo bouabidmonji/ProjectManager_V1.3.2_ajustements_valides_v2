@@ -39,10 +39,10 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.
 5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer l'historique et les responsabilités organisationnelles.
 6. Exécuter `schema-profiles-finance.sql` pour installer les profils `admin`, `technical`, `finance` et `viewer`.
-8. Exécuter `schema-responsibility-surveyor.sql` pour autoriser l'affectation d'un surveillant aux projets.
-9. Exécuter `schema-documents.sql` pour créer la bibliothèque des pièces jointes.
-10. Exécuter `schema-gis.sql` pour créer les objets géographiques GeoJSON.
-11. Créer le premier administrateur :
+7. Exécuter `schema-responsibility-surveyor.sql` pour autoriser l'affectation d'un surveillant aux projets.
+8. Exécuter `schema-documents.sql` pour créer la bibliothèque des pièces jointes.
+9. Exécuter `schema-gis.sql` pour créer les objets géographiques GeoJSON.
+10. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"
    $env:JWT_SECRET="SECRET_ALEATOIRE_DE_32_CARACTERES_MINIMUM"
@@ -51,9 +51,9 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
    $env:ADMIN_PASSWORD="MOT_DE_PASSE_LONG_ET_UNIQUE"
    npm run admin:create
    ```
-12. Reporter les mêmes paramètres dans le fichier `.env`.
-13. Démarrer le serveur : `npm start`.
-14. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
+11. Reporter les mêmes paramètres dans le fichier `.env`.
+12. Démarrer le serveur : `npm start`.
+13. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
 
 ## Fonctions actuellement présentes dans le socle V2
 - Authentification avec cookie HTTP-only et expiration de session.
