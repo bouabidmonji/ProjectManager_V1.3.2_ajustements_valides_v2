@@ -12,6 +12,8 @@ app.disable('x-powered-by');
 app.use(helmet({contentSecurityPolicy:false}));
 app.use(express.json({limit:'1mb'}));app.use(cookieParser());
 app.use(express.static(path.join(__dirname,'public')));
+app.use('/vendor/leaflet',express.static(path.join(__dirname,'node_modules/leaflet/dist')));
+app.use('/vendor/leaflet-draw',express.static(path.join(__dirname,'node_modules/leaflet-draw/dist')));
 const documentRoot=path.resolve(__dirname,process.env.DOCUMENT_STORAGE_DIR||'storage/documents');
 fs.mkdirSync(documentRoot,{recursive:true});
 const documentUpload=multer({storage:multer.diskStorage({destination:(_req,_file,cb)=>cb(null,documentRoot),filename:(_req,file,cb)=>cb(null,randomUUID()+path.extname(file.originalname).toLowerCase())}),limits:{fileSize:20*1024*1024,files:1},fileFilter:(_req,file,cb)=>{const ext=path.extname(file.originalname).toLowerCase(),ok=(ext==='.pdf'&&file.mimetype==='application/pdf')||(['.jpg','.jpeg'].includes(ext)&&file.mimetype==='image/jpeg')||(ext==='.png'&&file.mimetype==='image/png');cb(ok?null:new Error('Format refusé. Formats autorisés : PDF, JPG, PNG.'),ok);}});
