@@ -166,3 +166,5 @@ body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
 .gis-toolbar label select{min-width:190px}
 #projectMap .leaflet-control-container{z-index:500}
 #projectMap .leaflet-control{background:#fff;color:#243447;border:1px solid #cbd5df;border-radius:6px;box-shadow:0 1px 5px #0002}
+
+.gis-marker-icon{background:transparent;border:0}.gis-marker-icon span{display:flex;width:32px;height:32px;align-items:center;justify-content:center;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 1px 5px #0006;color:#fff;font-size:17px}
