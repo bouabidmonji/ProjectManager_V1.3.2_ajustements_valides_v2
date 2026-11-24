@@ -131,7 +131,7 @@ app.post('/api/projects/:id/documents',authRequired,(req,res,next)=>documentUplo
  }catch(e){await c.query('ROLLBACK').catch(()=>{});await fsp.unlink(req.file.path).catch(()=>{});console.error(e);res.status(500).json({error:'Enregistrement du document impossible.'});}finally{c.release();}
 });
 app.get('/api/projects/:id/documents/:documentId/download',authRequired,async(req,res)=>{
- try{const q=await pool.query('SELECT d.*,p.project_code FROM project_documents d JOIN projects p ON p.id=d.project_id WHERE d.id=$1 AND (d.project_id::text=$2 OR p.project_code=$2)',[req.params.documentId,req.params.id]);if(!q.rowCount)return res.status(404).json({error:'Document introuvable.'});const d=q.rows[0];if(!(req.user.role==='admin'||req.user.role==='viewer'||req.user.role===d.section))return res.status(403).json({error:'Accès refusé.'});const filePath=path.join(documentRoot,d.stored_filename);if(!fs.existsSync(filePath))return res.status(404).json({error:'Fichier absent du stockage. Vérifiez la sauvegarde des documents.'});res.setHeader('X-Content-Type-Options','nosniff');res.download(filePath,d.original_filename);
+ try{const q=await pool.query('SELECT d.*,p.project_code FROM project_documents d JOIN projects p ON p.id=d.project_id WHERE d.id=$1 AND (d.project_id::text=$2 OR p.project_code=$2)',[req.params.documentId,req.params.id]);if(!q.rowCount)return res.status(404).json({error:'Document introuvable.'});const d=q.rows[0];if(!(req.user.role==='admin'||req.user.role==='viewer'||req.user.role===d.section))return res.status(403).json({error:'Accès refusé.'});const filePath=path.join(documentRoot,d.stored_filename);if(!fs.existsSync(filePath))return res.status(404).json({error:'Fichier absent du stockage. Vérifiez la sauvegarde des documents.'});res.setHeader('X-Content-Type-Options','nosniff');if(req.query.inline==='1'&&['application/pdf','image/jpeg','image/png'].includes(d.mime_type)){res.setHeader('Content-Type',d.mime_type);res.setHeader('Content-Disposition','inline; filename*=UTF-8'''+encodeURIComponent(d.original_filename));return res.sendFile(filePath);}res.download(filePath,d.original_filename);
  }catch(e){console.error(e);res.status(500).json({error:'Téléchargement impossible.'});}
 });
 app.put('/api/projects/:id/responsibilities',authRequired,allow('admin'),async(req,res)=>{const b=req.body||{},role=b.role,userId=Number(b.user_id);if(!['principal','surveyor','technical','finance','procurement','gis'].includes(role)||!Number.isInteger(userId))return res.status(400).json({error:'Affectation invalide.'});const c=await pool.connect();try{
@@ -228,7 +228,7 @@ app.delete('/api/geometries/:id',authRequired,allow('admin','technical'),async(r
 
 app.get('/api/documents',authRequired,async(req,res)=>{
  try{
-  const {year,category,subcategory,document_type}=req.query;
+  const {year,category,subcategory,document_type,project}=req.query;
   const values=[req.user.role];
   const where=["($1 IN ('admin','viewer') OR d.section=$1)"];
   for(const [column,value] of [['p.initial_programming_year',year],['p.category',category],['p.subcategory',subcategory],['d.document_type',document_type]]){
@@ -237,6 +237,7 @@ app.get('/api/documents',authRequired,async(req,res)=>{
     where.push(column+'=$'+values.length);
    }
   }
+  if(project&&String(project).trim()){values.push('%'+String(project).trim().replace(/[\\%_]/g,'\\$&')+'%');where.push('(p.title ILIKE $'+values.length+' OR p.project_code ILIKE $'+values.length+')');}
   const sql=`SELECT d.id,d.project_id,d.section,d.document_type,d.title,d.reference_number,d.document_date,d.original_filename,d.mime_type,d.file_size,d.created_at,d.uploaded_by,u.display_name AS uploaded_by,p.project_code,p.title AS project_title,p.initial_programming_year,p.category,p.subcategory
    FROM project_documents d
    JOIN projects p ON p.id=d.project_id
