@@ -137,3 +137,12 @@ body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
 #detailContent td details{margin-top:6px}
 #detailContent td details summary{cursor:pointer;color:var(--primary,#2676a5);font-size:12px}
 #detailContent td pre{max-width:520px;max-height:240px;overflow:auto;white-space:pre-wrap;font-size:11px;background:#f5f7fa;padding:8px;border-radius:6px}
+
+/* Bibliothèque documentaire */
+.document-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.document-filters select{min-width:170px;flex:1}
+#documentsPage .panel-head{align-items:center}
+#documentRows td{vertical-align:middle}
+#documentRows td small{display:inline-block;max-width:190px;overflow-wrap:anywhere;color:var(--muted,#68788a)}
+#documentRows a{font-weight:700;color:var(--primary,#2676a5);white-space:nowrap}
+@media(max-width:700px){.document-filters select{min-width:100%;width:100%}}
