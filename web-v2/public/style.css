@@ -161,3 +161,8 @@ body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
 #gisFeatureForm{margin-top:16px;padding-top:14px;border-top:1px solid var(--border,#e4e9ef)}
 @media(max-width:1000px){.gis-layout{grid-template-columns:1fr}#projectMap{height:500px}}
 @media(max-width:600px){#projectMap{height:420px;min-height:360px}.gis-toolbar label{min-width:100%;}}
+
+/* Sélecteur de fond cartographique toujours visible */
+.gis-toolbar label select{min-width:190px}
+#projectMap .leaflet-control-container{z-index:500}
+#projectMap .leaflet-control{background:#fff;color:#243447;border:1px solid #cbd5df;border-radius:6px;box-shadow:0 1px 5px #0002}
