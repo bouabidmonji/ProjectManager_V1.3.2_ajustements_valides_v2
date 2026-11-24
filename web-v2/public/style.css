@@ -146,3 +146,18 @@ body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
 #documentRows td small{display:inline-block;max-width:190px;overflow-wrap:anywhere;color:var(--muted,#68788a)}
 #documentRows a{font-weight:700;color:var(--primary,#2676a5);white-space:nowrap}
 @media(max-width:700px){.document-filters select{min-width:100%;width:100%}}
+
+/* Module SIG : carte, outils et liste des objets */
+.gis-toolbar{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.gis-toolbar label{display:grid;gap:5px;min-width:240px;flex:1;font-size:12px;font-weight:700;color:var(--muted,#627287)}
+.gis-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:14px;align-items:start}
+.gis-map-panel{min-width:0}.gis-side-panel{min-width:0}
+#projectMap{height:620px;min-height:420px;width:100%;border-radius:9px;z-index:1;background:#e8edf1}
+.gis-feature{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--border,#e4e9ef)}
+.gis-feature .link{display:grid;text-align:left;gap:3px;min-width:0;white-space:normal}
+.gis-feature small{display:block;color:var(--muted,#68788a);font-size:11px;font-weight:400}
+.gis-feature .secondary{flex-shrink:0;padding:6px 9px}
+.gis-actions{display:flex;gap:8px;flex-wrap:wrap}
+#gisFeatureForm{margin-top:16px;padding-top:14px;border-top:1px solid var(--border,#e4e9ef)}
+@media(max-width:1000px){.gis-layout{grid-template-columns:1fr}#projectMap{height:500px}}
+@media(max-width:600px){#projectMap{height:420px;min-height:360px}.gis-toolbar label{min-width:100%;}}
