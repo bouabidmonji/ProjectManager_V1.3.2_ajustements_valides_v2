@@ -129,3 +129,11 @@ body.rtl .kpi-consumption-ring{right:auto;left:18px}
 body.rtl .kpi-groups .kpi{padding-left:16px;padding-right:58px}
 body.rtl .kpi-groups .kpi-icon{left:auto;right:16px}
 body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
+
+/* Historique détaillé : comparaison des valeurs avant/après */
+.history-changes{margin:8px 0 2px;padding-left:20px;color:var(--muted,#5c6b7b);font-size:12px;line-height:1.65}
+.history-changes li{margin:3px 0}
+.history-changes b{color:var(--text,#26384a)}
+#detailContent td details{margin-top:6px}
+#detailContent td details summary{cursor:pointer;color:var(--primary,#2676a5);font-size:12px}
+#detailContent td pre{max-width:520px;max-height:240px;overflow:auto;white-space:pre-wrap;font-size:11px;background:#f5f7fa;padding:8px;border-radius:6px}
