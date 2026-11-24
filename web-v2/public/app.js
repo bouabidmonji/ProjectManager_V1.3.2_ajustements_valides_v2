@@ -237,7 +237,7 @@ async function loadDocuments(){
 function geometryTypeLabel(t){return t==='Point'?'Point':t==='LineString'?'Polyligne':'Polygone';}
 function geometryStyle(g){const c=g?.properties?.color||'#2479a8';return {color:c,weight:4,fillColor:c,fillOpacity:.2};}
 const gisSymbolIcons={monument:'🏛️',building:'🏢',school:'🎓',sport:'🏟️',health:'✚',water:'💧',road:'🛣️',other:'📍'};
-function gisPointIcon(properties={}){const color=/^#[0-9a-fA-F]{6}$/.test(properties.color||'')?properties.color:'#64748b',symbol=gisSymbolIcons[properties.symbol]||gisSymbolIcons.other;return L.divIcon({className:'gis-marker-icon',html:'<span style="background:'+color+'">'+symbol+'</span>',iconSize:[34,34],iconAnchor:[17,17],tooltipAnchor:[0,-17]});}
+function gisPointIcon(properties={}){const color=/^#[0-9a-fA-F]{6}$/.test(properties.color||'')?properties.color:'#64748b',symbol=gisSymbolIcons[properties.symbol]||gisSymbolIcons.other;return L.divIcon({className:'gis-marker-icon',html:'<span style="background:'+color+'"><i>'+symbol+'</i></span>',iconSize:[34,34],iconAnchor:[17,17],tooltipAnchor:[0,-17]});}
 function initGisMap(){
  if(gisMap)return;
  gisMap=L.map('projectMap',{referrerPolicy:'strict-origin-when-cross-origin'}).setView([32.93,10.45],9);
