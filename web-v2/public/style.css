@@ -168,3 +168,5 @@ body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
 #projectMap .leaflet-control{background:#fff;color:#243447;border:1px solid #cbd5df;border-radius:6px;box-shadow:0 1px 5px #0002}
 
 .gis-marker-icon{background:transparent;border:0}.gis-marker-icon span{display:flex;width:32px;height:32px;align-items:center;justify-content:center;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 1px 5px #0006;color:#fff;font-size:17px}.gis-marker-icon i{font-style:normal;transform:rotate(45deg)}
+
+.document-file-actions{display:flex;align-items:center;gap:12px;margin-top:7px}.document-preview-dialog{width:min(1100px,94vw);height:min(850px,92vh);max-width:none;border:0;border-radius:14px;padding:18px;box-shadow:0 16px 60px #0004}.document-preview-dialog::backdrop{background:#142033aa}.document-preview-dialog iframe{width:100%;height:calc(100% - 55px);border:1px solid #dbe2eb;border-radius:8px}.document-preview-dialog .detail-head{display:flex;justify-content:space-between;align-items:center}.document-preview-dialog h2{margin:0}
