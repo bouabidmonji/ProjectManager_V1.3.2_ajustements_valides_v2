@@ -1,3 +1,22 @@
+-- Compatibilité avec l'ancien stockage clé/valeur (key, value, legacy_payload).
+-- On conserve intégralement l'ancienne table sous app_settings_legacy.
+-- Aucune donnée existante n'est supprimée.
+DO $migration$
+BEGIN
+ IF to_regclass('public.app_settings') IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='app_settings' AND column_name='group_key'
+    )
+ THEN
+   IF to_regclass('public.app_settings_legacy') IS NOT NULL THEN
+     RAISE EXCEPTION 'La table public.app_settings utilise encore l ancien format et public.app_settings_legacy existe déjà. Arrêt pour éviter tout écrasement.';
+   END IF;
+   ALTER TABLE public.app_settings RENAME TO app_settings_legacy;
+ END IF;
+END
+$migration$;
+
 -- Project Manager V2 : référentiel central des paramètres applicatifs.
 -- À exécuter une seule fois sur la base V2 existante.
 CREATE TABLE IF NOT EXISTS app_settings (
