@@ -12,6 +12,7 @@ app.disable('x-powered-by');
 app.use(helmet({contentSecurityPolicy:false}));
 app.use(express.json({limit:'1mb'}));app.use(cookieParser());
 app.use(express.static(path.join(__dirname,'public')));
+app.use('/vendor/pdfjs',express.static(path.join(__dirname,'node_modules/pdfjs-dist')));
 app.use('/vendor/leaflet',express.static(path.join(__dirname,'node_modules/leaflet/dist')));
 app.use('/vendor/leaflet-draw',express.static(path.join(__dirname,'node_modules/leaflet-draw/dist')));
 const documentRoot=path.resolve(__dirname,process.env.DOCUMENT_STORAGE_DIR||'storage/documents');
