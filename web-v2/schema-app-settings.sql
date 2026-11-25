@@ -76,4 +76,6 @@ SELECT DISTINCT 'technical_stage',trim(current_stage),trim(current_stage),true
 FROM project_followups WHERE NULLIF(trim(current_stage),'') IS NOT NULL
 ON CONFLICT(group_key,code) DO NOTHING;
 
--- Les types documentaires sont gérés par le référentiel app_settings.\nALTER TABLE project_documents DROP CONSTRAINT IF EXISTS project_documents_document_type_check;\nALTER TABLE project_documents ADD CONSTRAINT project_documents_document_type_check CHECK (section IN ('technical','finance') AND length(trim(document_type)) BETWEEN 1 AND 120);\n
+-- Les types documentaires sont gérés par le référentiel app_settings.
+ALTER TABLE project_documents DROP CONSTRAINT IF EXISTS project_documents_document_type_check;
+ALTER TABLE project_documents ADD CONSTRAINT project_documents_document_type_check CHECK (section IN ('technical','finance') AND length(trim(document_type)) BETWEEN 1 AND 120);
