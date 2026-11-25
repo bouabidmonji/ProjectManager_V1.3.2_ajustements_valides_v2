@@ -283,7 +283,7 @@ function applyModuleLanguage(){
  const ar=currentLang==='ar',t=settingsUi[currentLang],root=$('#settingsPage');if(root){
   const text=(selector,value)=>{const el=root.querySelector(selector);if(el)el.textContent=value;};
   text('.panel-head h2',t.title);text('.panel-head .muted',t.intro);text('#settingsRefresh',t.refresh);
-  const groupLabel=root.querySelector('label[for="settingsGroup"]');if(groupLabel)groupLabel.firstChild.textContent=t.group+' ';
+  const groupLabel=$('#settingsGroupLabel');if(groupLabel)groupLabel.firstChild.textContent=t.group+' ';const addButton=$('#settingCreateForm button.primary');if(addButton)addButton.textContent=ar?'إضافة':'Ajouter';
   const check=root.querySelector('.settings-check');if(check)check.lastChild.textContent=' '+t.inactive;
   text('#settingCreateForm h3',t.add);
   const heads=root.querySelectorAll('.panel-head h2');if(heads[1])heads[1].textContent=t.history;
@@ -293,7 +293,7 @@ function applyModuleLanguage(){
   const group=$('#settingsGroup');if(group)Array.from(group.options).forEach(o=>{o.textContent=settingGroupLabels[currentLang][o.value]||o.textContent;});
   const parent=$('#settingCreateForm')?.elements.parent_code;if(parent&&parent.options[0])parent.options[0].textContent=t.chooseParent;
  }
- const gisForm=$('#gisFeatureForm');if(gisForm){const names={object_project:ar?'المشروع المرتبط':'Projet associé',object_type:ar?'نوع الشكل الهندسي':'Type géométrique',object_coordinates:ar?'الإحداثيات (خط العرض، خط الطول)':'Coordonnées (latitude, longitude)',label:ar?'اسم العنصر':'Nom de l’objet',symbol:ar?'الصنف / الرمز':'Catégorie / icône',color:ar?'لون الرمز':'Couleur du symbole',description:ar?'الوصف':'Description'};gisForm.querySelectorAll('label').forEach(el=>{const control=el.querySelector('input,select,textarea');const key=control?.name;if(names[key])el.firstChild.textContent=names[key]+' ';});const h=gisForm.querySelector('h3');if(h)h.textContent=ar?'معلومات العنصر':'Informations de l’objet';}
+ const gisForm=$('#gisFeatureForm');if(gisForm){const names={object_project:ar?'المشروع المرتبط':'Projet associé',object_type:ar?'نوع الشكل الهندسي':'Type géométrique',object_coordinates:ar?'الإحداثيات (خط العرض، خط الطول)':'Coordonnées (latitude, longitude)',label:ar?'اسم العنصر':'Nom de l’objet',symbol:ar?'الصنف / الرمز':'Catégorie / icône',color:ar?'لون الرمز':'Couleur du symbole',description:ar?'الوصف':'Description'};gisForm.querySelectorAll('label').forEach(el=>{const control=el.querySelector('input,select,textarea');const key=control?.name;if(names[key])el.firstChild.textContent=names[key]+' ';});const h=gisForm.querySelector('h3');if(h)h.textContent=ar?'معلومات العنصر':'Informations de l’objet';const save=gisForm.querySelector('button.primary'),cancel=$('#gisCancel');if(save)save.textContent=ar?'حفظ':'Enregistrer';if(cancel)cancel.textContent=ar?'إلغاء':'Annuler';}
  const docDialog=$('#documentPreviewDialog');if(docDialog){const h=$('#documentPreviewTitle');if(h&&!h.dataset.filename)h.textContent=ar?'معاينة الوثيقة':'Aperçu du document';const close=$('#closeDocumentPreview');if(close)close.textContent=ar?'إغلاق':'Fermer';const open=$('#documentPreviewOpen');if(open)open.textContent=ar?'فتح في نافذة جديدة':'Ouvrir dans un nouvel onglet';}
 }
 async function loadReferenceSettings(){try{const d=await api('/settings');appSettings=d.items||[];}catch(e){appSettings=[];console.error('Référentiel de paramètres indisponible. Exécuter schema-app-settings.sql.',e);}}
