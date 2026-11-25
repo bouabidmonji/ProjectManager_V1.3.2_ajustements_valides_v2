@@ -44,7 +44,7 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 9. Exécuter `schema-project-document-uniqueness.sql` pour limiter à une pièce jointe par type et par projet.
 10. Exécuter `schema-procedure-designation.sql` pour ajouter les justificatifs de désignation directe (également requis sur une base existante).
 11. Exécuter `schema-payment-documents.sql` pour créer les justificatifs rattachés aux paiements.
-12. Exécuter `schema-app-settings.sql` pour créer les référentiels de paramétrage (à exécuter une seule fois).
+12. Exécuter `schema-app-settings.sql` pour créer les référentiels de paramétrage. Si une ancienne table `app_settings` au format `key/value/legacy_payload` existe, le script la conserve automatiquement sous `app_settings_legacy` avant de créer le nouveau référentiel. Ne pas supprimer cette table de sauvegarde.
 13. Exécuter `schema-gis.sql` pour créer les objets géographiques GeoJSON.
 14. Créer le premier administrateur :
    ```powershell
