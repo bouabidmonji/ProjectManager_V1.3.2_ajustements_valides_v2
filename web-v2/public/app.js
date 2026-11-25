@@ -284,6 +284,7 @@ async function loadUsers(){
   });
  }
  const d=await api('/users');
+ if(!Array.isArray(d.items))throw new Error('La réponse du serveur ne contient pas la liste des utilisateurs. Vérifiez la version de l’API.');
  host.innerHTML='<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Actif</th></tr></thead><tbody>'+d.items.map(x=>'<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.role)+'</td><td>'+(x.is_active?'Oui':'Non')+'</td></tr>').join('')+'</tbody></table></div>';
 }
 function nav(page){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$('#'+page+'Page').classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('#pageTitle').textContent=({dashboard:translations[currentLang].dashboard,projects:translations[currentLang].projects,documents:translations[currentLang].documents,gis:translations[currentLang].gis,users:translations[currentLang].users}[page]||page);if(page==='projects')loadProjects().catch(e=>alert(e.message));if(page==='documents')loadDocuments().catch(e=>alert(e.message));if(page==='gis')loadGis().catch(e=>alert(e.message));if(page==='users')loadUsers().catch(e=>alert(e.message));}
