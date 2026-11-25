@@ -44,8 +44,9 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 9. Exécuter `schema-project-document-uniqueness.sql` pour limiter à une pièce jointe par type et par projet.
 10. Exécuter `schema-procedure-designation.sql` pour ajouter les justificatifs de désignation directe (également requis sur une base existante).
 11. Exécuter `schema-payment-documents.sql` pour créer les justificatifs rattachés aux paiements.
-12. Exécuter `schema-gis.sql` pour créer les objets géographiques GeoJSON.
-13. Créer le premier administrateur :
+12. Exécuter `schema-app-settings.sql` pour créer les référentiels de paramétrage (à exécuter une seule fois).
+13. Exécuter `schema-gis.sql` pour créer les objets géographiques GeoJSON.
+14. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"
    $env:JWT_SECRET="SECRET_ALEATOIRE_DE_32_CARACTERES_MINIMUM"
@@ -54,9 +55,9 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
    $env:ADMIN_PASSWORD="MOT_DE_PASSE_LONG_ET_UNIQUE"
    npm run admin:create
    ```
-14. Reporter les mêmes paramètres dans le fichier `.env`.
-15. Démarrer le serveur : `npm start`.
-16. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
+15. Reporter les mêmes paramètres dans le fichier `.env`.
+16. Démarrer le serveur : `npm start`.
+17. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
 
 ## Fonctions actuellement présentes dans le socle V2
 - Authentification avec cookie HTTP-only et expiration de session.
