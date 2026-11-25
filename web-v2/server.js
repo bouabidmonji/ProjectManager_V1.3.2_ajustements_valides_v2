@@ -113,7 +113,7 @@ app.get('/api/projects/:id',authRequired,async(req,res)=>{try{
  }catch(e){console.error(e);res.status(500).json({error:'Impossible de charger la fiche projet.'});}});
 app.post('/api/projects/:id/documents',authRequired,(req,res,next)=>documentUpload.single('file')(req,res,e=>{if(e)return res.status(e instanceof multer.MulterError?413:400).json({error:e.message||'Téléversement impossible.'});next();}),async(req,res)=>{
  const b=req.body||{},section=String(b.section||''),type=String(b.document_type||''),role=req.user.role;
- const allowedTypes={technical:['ordre_service','reception_provisoire','reception_definitive'],finance:['market_commission_pv']};
+ const allowedTypes={technical:['ordre_service','reception_provisoire','reception_definitive','bc_commission_pv','designation_letter'],finance:['market_commission_pv']};
  if(!['admin','technical','finance'].includes(role)||(section==='technical'&&!['admin','technical'].includes(role))||(section==='finance'&&!['admin','finance'].includes(role))||!allowedTypes[section]?.includes(type)){if(req.file)await fsp.unlink(req.file.path).catch(()=>{});return res.status(403).json({error:'Vous ne disposez pas des droits pour déposer ce document.'});}
  if(!req.file)return res.status(400).json({error:'Veuillez sélectionner un fichier.'});
  const title=String(b.title||'').trim(),reference=String(b.reference_number||'').trim()||null,date=String(b.document_date||'').trim()||null;
