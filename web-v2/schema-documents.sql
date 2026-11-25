@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS project_documents (
  project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
  section TEXT NOT NULL CHECK (section IN ('technical','finance')),
  document_type TEXT NOT NULL CHECK (
-  (section='technical' AND document_type IN ('ordre_service','reception_provisoire','reception_definitive'))
+  (section='technical' AND document_type IN ('ordre_service','reception_provisoire','reception_definitive','bc_commission_pv','designation_letter'))
   OR (section='finance' AND document_type IN ('market_commission_pv'))
  ),
  title TEXT NOT NULL CHECK (length(trim(title)) BETWEEN 1 AND 250),
