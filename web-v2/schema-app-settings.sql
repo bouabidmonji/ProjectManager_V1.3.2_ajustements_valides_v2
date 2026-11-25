@@ -13,6 +13,22 @@ BEGIN
      RAISE EXCEPTION 'La table public.app_settings utilise encore l ancien format et public.app_settings_legacy existe déjà. Arrêt pour éviter tout écrasement.';
    END IF;
    ALTER TABLE public.app_settings RENAME TO app_settings_legacy;
+   -- Les index de l'ancienne table gardent leur nom après le renommage.
+   -- On les renomme également pour libérer les noms du nouveau schéma.
+   DECLARE
+     idx RECORD;
+     renamed_index TEXT;
+   BEGIN
+     FOR idx IN
+       SELECT indexname FROM pg_indexes
+       WHERE schemaname='public' AND tablename='app_settings_legacy'
+     LOOP
+       renamed_index := left('legacy_' || idx.indexname, 63);
+       IF to_regclass('public.' || renamed_index) IS NULL THEN
+         EXECUTE format('ALTER INDEX public.%I RENAME TO %I', idx.indexname, renamed_index);
+       END IF;
+     END LOOP;
+   END;
  END IF;
 END
 $migration$;
