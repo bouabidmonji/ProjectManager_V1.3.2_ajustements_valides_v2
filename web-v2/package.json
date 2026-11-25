@@ -1,1 +1,26 @@
-{"name":"project-manager-tataouine-v2","version":"2.0.0","private":true,"description":"Application web de suivi des projets communaux","scripts":{"start":"node server.js","admin:create":"node scripts/create-admin.js"},"engines":{"node":">=22"},"dependencies":{"bcryptjs":"^2.4.3","cookie-parser":"^1.4.7","dotenv":"^16.4.7","express":"^4.21.2","helmet":"^8.0.0","jsonwebtoken":"^9.0.2","pg":"^8.13.1","multer":"^2.0.2","leaflet":"^1.9.4","leaflet-draw":"^1.0.4"}}
+{
+  "name": "project-manager-tataouine-v2",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Application web de suivi des projets communaux",
+  "scripts": {
+    "start": "node server.js",
+    "admin:create": "node scripts/create-admin.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "multer": "^2.0.2",
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
+    "pdfjs-dist": "^4.10.38"
+  }
+}
