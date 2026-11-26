@@ -43,3 +43,15 @@
 .meeting-category-row>div:first-child{display:flex;justify-content:space-between;gap:.5rem;margin-bottom:.35rem}
 .meeting-category-row>div:first-child span{color:var(--muted,#64748b);font-size:.85rem}
 @media(max-width:760px){.meeting-chart-grid{grid-template-columns:1fr}}
+
+/* Mise en page du rapport de synthèse inspirée du document de référence municipal */
+.report-cover{text-align:center;padding:28px 18px 22px;margin:0 0 18px;border-bottom:3px solid #285b80;color:#17476f;background:linear-gradient(180deg,#f7fafc,#fff)}
+.report-cover .eyebrow{font-size:11px;letter-spacing:.08em;color:#64748b}
+.report-cover h2{font-size:25px;line-height:1.35;color:#17476f;margin:8px 0}
+.report-cover p{margin:5px 0;color:#526579}
+.report-section{border:0;border-bottom:1px solid #d8e1e9;border-radius:0;padding:16px 4px 18px;background:transparent}
+.report-section h3{border-bottom:2px solid #285b80;padding:0 0 8px;color:#17476f;font-size:17px}
+.report-section th{background:#285b80;color:#fff;font-weight:700}
+.report-section td{border:1px solid #aeb8c2}
+.report-section table{border-collapse:collapse}
+@media print{.report-cover{background:#fff}.report-section{break-inside:avoid}.report-section h3{color:#17476f}}
