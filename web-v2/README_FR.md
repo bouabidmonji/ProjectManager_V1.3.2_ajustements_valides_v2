@@ -39,8 +39,14 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 4. Exécuter `schema-auth.sql` sur la base V2 après les scripts de migration ci-dessus.
 5. Exécuter `schema-workspace.sql` après `schema-auth.sql` pour créer l'historique et les responsabilités organisationnelles.
 6. Exécuter `schema-profiles-finance.sql` pour installer les profils `admin`, `technical`, `finance` et `viewer`.
-7. Exécuter `schema-responsibility-surveyor.sql` pour autoriser l'affectation d'un surveillant aux projets (mise à jour de novembre 2026).
-6. Créer le premier administrateur :
+7. Exécuter `schema-responsibility-surveyor.sql` pour autoriser l'affectation d'un surveillant aux projets.
+8. Exécuter `schema-documents.sql` pour créer la bibliothèque des pièces jointes.
+9. Exécuter `schema-project-document-uniqueness.sql` pour limiter à une pièce jointe par type et par projet.
+10. Exécuter `schema-procedure-designation.sql` pour ajouter les justificatifs de désignation directe (également requis sur une base existante).
+11. Exécuter `schema-payment-documents.sql` pour créer les justificatifs rattachés aux paiements.
+12. Exécuter `schema-app-settings.sql` pour créer les référentiels de paramétrage. Si une ancienne table `app_settings` au format `key/value/legacy_payload` existe, le script la conserve automatiquement sous `app_settings_legacy` avant de créer le nouveau référentiel. Ne pas supprimer cette table de sauvegarde.
+13. Exécuter `schema-gis.sql` pour créer les objets géographiques GeoJSON.
+14. Créer le premier administrateur :
    ```powershell
    $env:DATABASE_URL="postgresql://UTILISATEUR:MOT_DE_PASSE@localhost:5432/project_manager_v2"
    $env:JWT_SECRET="SECRET_ALEATOIRE_DE_32_CARACTERES_MINIMUM"
@@ -49,9 +55,9 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
    $env:ADMIN_PASSWORD="MOT_DE_PASSE_LONG_ET_UNIQUE"
    npm run admin:create
    ```
-7. Reporter les mêmes paramètres dans le fichier `.env`.
-8. Démarrer le serveur : `npm start`.
-9. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
+15. Reporter les mêmes paramètres dans le fichier `.env`.
+16. Démarrer le serveur : `npm start`.
+17. Depuis les postes du LAN, ouvrir `http://IP_DU_PC_SERVEUR:3001`.
 
 ## Fonctions actuellement présentes dans le socle V2
 - Authentification avec cookie HTTP-only et expiration de session.
@@ -60,7 +66,9 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 - Clôture financière dédiée aux consultations : saisie de la date du dernier paiement et de la date de clôture, avec contrôle chronologique et historisation.
 - Graphiques animés et interactifs ; répartition annuelle indépendante du filtre global.
 - Filtres de projets par année enregistrée, état opérationnel et catégorie.
-- Fiche projet avec données techniques, suivis, finances, paiements et historique.
+- Fiche projet avec données techniques, suivis, finances, paiements, pièces jointes et historique détaillé des changements avant/après.
+- Bibliothèque documentaire centralisée avec filtres par année, catégorie, sous-catégorie et type de pièce.
+- Module SIG Leaflet : points, polylignes et polygones GeoJSON, édition et traçabilité des objets.
 - Permissions métier contrôlées côté serveur : technique pour le suivi physique ; finance pour ressources, crédits, paiements et clôture ; consultation en lecture seule.
 - Basculement de langue français/arabe et prise en charge RTL de l'interface principale.
 - Tableau de bord initial et liste/recherche des projets.
@@ -74,11 +82,11 @@ Prérequis : Node.js 22+, PostgreSQL 15+.
 
 ## Modules non encore terminés
 La version présente est un socle de développement, pas une version de production. Restent notamment :
-- fiche projet complète enrichie (documents, marchés, Gantt et pièces jointes) ;
+- gestion détaillée des marchés, engagements et pièces justificatives financières ;
 - suivi financier complet (engagements, pièces justificatives, rapprochements et contrôles) ;
 - module marchés et étapes de procédure ;
 - diagrammes de Gantt et alertes ;
-- SIG Leaflet : points, polylignes, polygones, photos ;
+- fonds cartographiques hors ligne et outils SIG avancés (longueurs/surfaces en projection, analyses spatiales, photos géoréférencées) ;
 - traduction intégrale des formulaires et rapports PDF français/arabe ;
 - sauvegarde/restauration, gestion des sessions et durcissement de sécurité ;
 - tests d'intégration, de charge et recette avec les agents.

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Aperçu PDF</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font:14px system-ui,sans-serif;background:#eef1f5;color:#172033}
+    .toolbar{height:48px;display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:#172033;color:#fff}
+    .toolbar button{border:1px solid #667085;border-radius:5px;background:#27364f;color:#fff;padding:5px 11px;cursor:pointer}
+    .toolbar button:disabled{opacity:.4;cursor:default}#pageInfo{min-width:92px;text-align:center;font-variant-numeric:tabular-nums}
+    #status{padding:8px 14px;text-align:center;background:#fff;color:#475467}
+    #pages{height:calc(100% - 82px);overflow:auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px}
+    #pageCanvas{display:block;max-width:100%;height:auto;background:white;box-shadow:0 2px 10px #0002}
+    .error{color:#b42318}
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <button id="prev" type="button" disabled>Précédente</button>
+    <span id="pageInfo">— / —</span>
+    <button id="next" type="button" disabled>Suivante</button>
+    <button id="zoomOut" type="button" disabled>−</button>
+    <button id="zoomIn" type="button" disabled>+</button>
+    <button id="fit" type="button" disabled>Ajuster</button>
+  </header>
+  <div id="status" role="status">Chargement du document PDF…</div>
+  <main id="pages"><canvas id="pageCanvas"></canvas></main>
+  <script type="module" src="/pdf-viewer.js"></script>
+</body>
+</html>
