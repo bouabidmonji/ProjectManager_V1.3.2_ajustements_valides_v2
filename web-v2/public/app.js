@@ -74,10 +74,10 @@ function bindKpiDrilldowns(){
  const map={kpiLate:'late',kpiBlocked:'blocked',kpiProvisional:'provisional',kpiFinal:'final',kpiClosureOverdue:'closure'};
  for(const [id,kind] of Object.entries(map)){const el=$('#'+id);if(!el)continue;el.onclick=()=>showKpiDetail(kind);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showKpiDetail(kind);}};}
 }
-function renderYearChart(){
- const years=[...new Set(allProjects.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
- if(!years.length){$('#yearChart').innerHTML='<p class="muted">Aucune année de programmation renseignée.</p>';return;}
- const vals=years.map(y=>{const items=allProjects.filter(p=>Number(p.initial_programming_year)===y);const avg=items.length?items.reduce((n,p)=>n+Number(p.physical_progress||0),0)/items.length:0;return {year:y,count:items.length,budget:sum(items,'updated_cost'),progress:avg,items};});
+function renderYearChart(root=document,rows=allProjects){
+ const years=[...new Set(rows.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
+ if(!years.length){root.querySelector('#yearChart').innerHTML='<p class="muted">Aucune année de programmation renseignée.</p>';return;}
+ const vals=years.map(y=>{const items=rows.filter(p=>Number(p.initial_programming_year)===y);const avg=items.length?items.reduce((n,p)=>n+Number(p.physical_progress||0),0)/items.length:0;return {year:y,count:items.length,budget:sum(items,'updated_cost'),progress:avg,items};});
  const max=Math.max(1,...vals.map(x=>x.count)),w=Math.max(590,years.length*105+150),h=270,l=55,r=82,t=30,b=48,pw=w-l-r,ph=h-t-b,bw=Math.min(34,pw/Math.max(1,years.length)*.42);
  const xAt=i=>l+(vals.length===1?pw/2:i*pw/(vals.length-1));
  const yCount=v=>t+ph-v/max*ph,yProgress=v=>t+ph-Math.max(0,Math.min(100,v))/100*ph;
@@ -85,8 +85,8 @@ function renderYearChart(){
  const bars=vals.map((p,i)=>'<rect class="year-bar" x="'+(xAt(i)-bw/2)+'" y="'+yCount(p.count)+'" width="'+bw+'" height="'+(t+ph-yCount(p.count))+'" rx="5"><title>'+p.count+' projet(s) · '+money(p.budget)+'</title></rect>').join('');
  const line=vals.map((p,i)=>xAt(i)+','+yProgress(p.progress)).join(' ');
  const marks=vals.map((p,i)=>'<g class="year-mark" data-year="'+p.year+'" tabindex="0"><circle class="year-progress-point" cx="'+xAt(i)+'" cy="'+yProgress(p.progress)+'" r="5"/><text x="'+xAt(i)+'" y="'+(yProgress(p.progress)-12)+'" text-anchor="middle" class="point-label">'+p.progress.toFixed(1)+'%</text><text x="'+xAt(i)+'" y="'+(h-13)+'" text-anchor="middle" class="axis-label">'+p.year+'</text><title>'+p.year+' · '+p.count+' projet(s) · Avancement physique moyen : '+p.progress.toFixed(1)+'% · '+money(p.budget)+'</title></g>').join('');
- $('#yearChart').innerHTML='<div class="year-legend"><span><i class="year-legend-count"></i>Nombre de projets</span><span><i class="year-legend-progress"></i>Avancement physique moyen</span></div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="year-svg">'+grid+bars+'<polyline points="'+line+'" class="year-progress-line"/>'+marks+'</svg></div><p class="chart-hint">Colonnes : nombre de projets. Courbe : avancement physique moyen par année de programmation. Cliquez sur une année pour filtrer le tableau de bord.</p>';
- document.querySelectorAll('#yearChart [data-year]').forEach(el=>el.addEventListener('click',()=>{$('#dashboardYear').value=el.dataset.year;renderDashboard();}));
+ root.querySelector('#yearChart').innerHTML='<div class="year-legend"><span><i class="year-legend-count"></i>Nombre de projets</span><span><i class="year-legend-progress"></i>Avancement physique moyen</span></div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="year-svg">'+grid+bars+'<polyline points="'+line+'" class="year-progress-line"/>'+marks+'</svg></div><p class="chart-hint">Colonnes : nombre de projets. Courbe : avancement physique moyen par année de programmation. Cliquez sur une année pour filtrer le tableau de bord.</p>';
+ if(root===document)root.querySelectorAll('#yearChart [data-year]').forEach(el=>el.addEventListener('click',()=>{$('#dashboardYear').value=el.dataset.year;renderDashboard();}));
 }
 function donutMarkup(items,total,label){
  const valid=items.filter(x=>x.value>0);if(!valid.length)return '<p class="muted">Aucune donnée disponible.</p>';
@@ -95,51 +95,51 @@ function donutMarkup(items,total,label){
  const legend=valid.map((x,i)=>'<button class="legend-row" data-key="'+esc(x.key)+'" data-value="'+esc(x.valueKey)+'" data-label="'+esc(x.label)+'"><i style="background:'+palette[i%palette.length]+'"></i><span>'+esc(x.label)+'</span><b>'+pct(x.value/total*100)+'</b></button>').join('');
  return '<div class="donut-layout"><svg viewBox="0 0 120 120" class="donut-svg" role="img" aria-label="'+esc(label)+'"><circle cx="60" cy="60" r="43" fill="none" stroke="#edf1f5" stroke-width="17"/>'+arcs+'<text x="60" y="57" text-anchor="middle" class="donut-number">'+valid.reduce((a,x)=>a+x.count,0)+'</text><text x="60" y="70" text-anchor="middle" class="donut-caption">'+(valid[0].key==='status'?'PROJETS':'SOURCES')+'</text></svg><div class="legend-list">'+legend+'</div></div>';
 }
-function renderStatusChart(rows){
+function renderStatusChart(rows,root=document){
  const defs=currentLang==='ar'?[['لم ينطلقوا','not_started'],['في طور الإنجاز','in_progress'],['معطلون','blocked'],['منجزون','completed'],['ملغون','cancelled']]:[['Non démarrés','not_started'],['En cours','in_progress'],['Bloqués','blocked'],['Achevés','completed'],['Annulés','cancelled']];
  const items=defs.map(([label,key])=>{const a=rows.filter(p=>(p.operational_status||'not_started')===key);return {label,key:'status',valueKey:key,value:a.length,count:a.length,amount:sum(a,'updated_cost')};});
- $('#statusChart').innerHTML=donutMarkup(items,rows.length,'État opérationnel');bindDonut('status');
+ root.querySelector('#statusChart').innerHTML=donutMarkup(items,rows.length,'État opérationnel');bindDonut('status',root);
 }
-function renderFundingChart(rows){
+function renderFundingChart(rows,root=document){
  const defs=currentLang==='ar'?[['تمويل ذاتي','self_funding'],['قرض','loan'],['مساعدات استثنائية','exceptional_aid'],['مساعدات غير مخصصة','unassigned_aid'],['مساعدات مخصصة','assigned_aid'],['مصادر أخرى','other_funding']]:[['Autofinancement','self_funding'],['Emprunt','loan'],['Aides exceptionnelles','exceptional_aid'],['Aides non affectées','unassigned_aid'],['Aides affectées','assigned_aid'],['Autres sources','other_funding']];
  const items=defs.map(([label,key])=>{const a=rows.filter(p=>Number(p[key])>0);return {label,key:'funding',valueKey:key,value:sum(rows,key),count:a.length,amount:sum(rows,key)};}).filter(x=>x.value>0);
- $('#fundingChart').innerHTML=donutMarkup(items,items.reduce((a,x)=>a+x.value,0),'Sources de financement');bindDonut('funding');
+ root.querySelector('#fundingChart').innerHTML=donutMarkup(items,items.reduce((a,x)=>a+x.value,0),'Sources de financement');bindDonut('funding',root);
 }
-function bindDonut(panelKey){
- const arcs=[...document.querySelectorAll('#'+panelKey+'Chart .donut-arc')];arcs.forEach((el,i)=>{const target=el.dataset.dash;el.style.transition='stroke-dasharray 1.25s cubic-bezier(.2,.8,.2,1) '+(i*.12)+'s';requestAnimationFrame(()=>el.setAttribute('stroke-dasharray',target));});
- document.querySelectorAll('#'+panelKey+'Chart [data-key]').forEach(el=>el.addEventListener('click',()=>showChartDetail(panelKey,el.dataset.key,el.dataset.value,el.dataset.label)));
+function bindDonut(panelKey,root=document){
+ const arcs=[...root.querySelectorAll('#'+panelKey+'Chart .donut-arc')];arcs.forEach((el,i)=>{const target=el.dataset.dash;el.style.transition='stroke-dasharray 1.25s cubic-bezier(.2,.8,.2,1) '+(i*.12)+'s';requestAnimationFrame(()=>el.setAttribute('stroke-dasharray',target));});
+ if(root===document)root.querySelectorAll('#'+panelKey+'Chart [data-key]').forEach(el=>el.addEventListener('click',()=>showChartDetail(panelKey,el.dataset.key,el.dataset.value,el.dataset.label)));
 }
-function renderCategoryChart(rows){
+function renderCategoryChart(rows,root=document){
  const cats=[...new Set(rows.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
- if(!cats.length){$('#categoryChart').innerHTML='<p class="muted">Aucune catégorie renseignée.</p>';return;}
+ if(!cats.length){root.querySelector('#categoryChart').innerHTML='<p class="muted">Aucune catégorie renseignée.</p>';return;}
  const max=Math.max(1,...cats.map(c=>sum(rows.filter(p=>p.category===c),'updated_cost')));
  const labels=currentLang==='ar'?['الاعتمادات المخصصة','الاعتمادات المستهلكة','نسبة الاستهلاك']:['Crédits alloués','Crédits consommés','Taux de consommation'];
- $('#categoryChart').innerHTML='<div class="category-legend"><span><i class="bar-allocated"></i>'+labels[0]+'</span><span><i class="bar-consumed"></i>'+labels[1]+'</span><span><i class="bar-rate"></i>'+labels[2]+'</span></div>'+cats.map(c=>{const a=rows.filter(p=>p.category===c),alloc=sum(a,'updated_cost'),paid=sum(a,'consumed_credits'),rate=alloc?Math.min(100,paid/alloc*100):0,tip=currentLang==='ar'?settingsLabel('project_category',c)+' · '+a.length+' مشاريع · مخصص: '+money(alloc)+' · مستهلك: '+money(paid)+' · النسبة: '+pct(rate):settingsLabel('project_category',c)+' · '+a.length+' projet(s) · Alloué : '+money(alloc)+' · Consommé : '+money(paid)+' · Taux : '+pct(rate);const color=/infrastructure/i.test(c)?'#16877c':palette[cats.indexOf(c)%palette.length];return '<button class="category-row" style="--category-color:'+color+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'" data-category="'+esc(c)+'"><span class="category-name">'+esc(c)+' <small>'+a.length+' projet(s)</small></span><span class="bar-pair"><span class="bar-line"><i class="bar-allocated" style="width:0" data-width="'+alloc/max*100+'%"></i></span><span class="bar-line"><i class="bar-consumed" style="width:0" data-width="'+Math.min(100,paid/max*100)+'%"></i></span><span class="bar-line"><i class="bar-rate" style="width:0" data-width="'+rate+'%"></i></span></span><span class="category-values"><b>'+money(alloc)+'</b><small>'+money(paid)+' consommés</small><small class="rate-value">'+pct(rate)+(currentLang==='ar'?' استهلاك / اعتماد':' consommés / alloués')+'</small></span></button>';}).join('');
- requestAnimationFrame(()=>document.querySelectorAll('#categoryChart i[data-width]').forEach(el=>el.style.width=el.dataset.width));
- document.querySelectorAll('#categoryChart [data-category]').forEach(el=>el.addEventListener('click',()=>showChartDetail('category','category',el.dataset.category,el.dataset.category)));
+ root.querySelector('#categoryChart').innerHTML='<div class="category-legend"><span><i class="bar-allocated"></i>'+labels[0]+'</span><span><i class="bar-consumed"></i>'+labels[1]+'</span><span><i class="bar-rate"></i>'+labels[2]+'</span></div>'+cats.map(c=>{const a=rows.filter(p=>p.category===c),alloc=sum(a,'updated_cost'),paid=sum(a,'consumed_credits'),rate=alloc?Math.min(100,paid/alloc*100):0,tip=currentLang==='ar'?settingsLabel('project_category',c)+' · '+a.length+' مشاريع · مخصص: '+money(alloc)+' · مستهلك: '+money(paid)+' · النسبة: '+pct(rate):settingsLabel('project_category',c)+' · '+a.length+' projet(s) · Alloué : '+money(alloc)+' · Consommé : '+money(paid)+' · Taux : '+pct(rate);const color=/infrastructure/i.test(c)?'#16877c':palette[cats.indexOf(c)%palette.length];return '<button class="category-row" style="--category-color:'+color+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'" data-category="'+esc(c)+'"><span class="category-name">'+esc(c)+' <small>'+a.length+' projet(s)</small></span><span class="bar-pair"><span class="bar-line"><i class="bar-allocated" style="width:0" data-width="'+alloc/max*100+'%"></i></span><span class="bar-line"><i class="bar-consumed" style="width:0" data-width="'+Math.min(100,paid/max*100)+'%"></i></span><span class="bar-line"><i class="bar-rate" style="width:0" data-width="'+rate+'%"></i></span></span><span class="category-values"><b>'+money(alloc)+'</b><small>'+money(paid)+' consommés</small><small class="rate-value">'+pct(rate)+(currentLang==='ar'?' استهلاك / اعتماد':' consommés / alloués')+'</small></span></button>';}).join('');
+ requestAnimationFrame(()=>root.querySelectorAll('#categoryChart i[data-width]').forEach(el=>el.style.width=el.dataset.width));
+ if(root===document)root.querySelectorAll('#categoryChart [data-category]').forEach(el=>el.addEventListener('click',()=>showChartDetail('category','category',el.dataset.category,el.dataset.category)));
 }
-function renderTrend(){
- const years=[...new Set(allProjects.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
- const cats=[...new Set(allProjects.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+function renderTrend(rows=allProjects,root=document){
+ const years=[...new Set(rows.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
+ const cats=[...new Set(rows.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
  if(trendSelected===null)trendSelected=[...cats];
  if(!trendSelected.length&&cats.length)trendSelected=[...cats];
- $('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+''+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+categoryColor(c,cats)+'"></i>'+esc(settingsLabel('project_category',c))+'</label>').join('');
- document.querySelectorAll('#trendCategoryFilter input').forEach(el=>el.addEventListener('change',()=>{trendSelected=[...document.querySelectorAll('#trendCategoryFilter input:checked')].map(x=>x.value);drawTrend(years,cats);}));
- drawTrend(years,cats);
+ if(root===document)root.querySelector('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+''+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+categoryColor(c,cats)+'"></i>'+esc(settingsLabel('project_category',c))+'</label>').join('');
+ if(root===document){root.querySelectorAll('#trendCategoryFilter input').forEach(el=>el.addEventListener('change',()=>{trendSelected=[...root.querySelectorAll('#trendCategoryFilter input:checked')].map(x=>x.value);drawTrend(years,cats,rows,root);}));}
+ drawTrend(years,cats,rows,root);
 }
-function drawTrend(years,cats){
+function drawTrend(years,cats,rows=allProjects,root=document){
  const selected=cats.filter(c=>trendSelected.includes(c));
- if(!years.length||!selected.length){$('#allocationTrendChart').innerHTML='<p class="muted">Sélectionnez au moins une catégorie disposant de données.</p>';return;}
+ if(!years.length||!selected.length){root.querySelector('#allocationTrendChart').innerHTML='<p class="muted">Sélectionnez au moins une catégorie disposant de données.</p>';return;}
  const w=Math.max(560,years.length*105+110),h=280,l=82,r=22,t=24,b=48,pw=w-l-r,ph=h-t-b;
- const series=selected.map(c=>({category:c,values:years.map(y=>{const a=allProjects.filter(p=>p.category===c&&Number(p.initial_programming_year)===y);return {year:y,items:a,amount:sum(a,'updated_cost')};})}));
+ const series=selected.map(c=>({category:c,values:years.map(y=>{const a=rows.filter(p=>p.category===c&&Number(p.initial_programming_year)===y);return {year:y,items:a,amount:sum(a,'updated_cost')};})}));
  const max=Math.max(1,...series.flatMap(s=>s.values.map(v=>v.amount)));
  const yPos=v=>t+ph-v/max*ph;
  const grid=[0,.25,.5,.75,1].map(x=>{const y=t+ph-x*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-10)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+money(max*x).replace(' DT','')+'</text>';}).join('');
  const lines=series.map((s,i)=>{const color=categoryColor(s.category,cats);const points=s.values.map((v,j)=>({ ...v,x:l+(years.length===1?pw/2:j*pw/(years.length-1)),y:yPos(v.amount)}));const poly=points.map(p=>p.x+','+p.y).join(' ');return '<polyline points="'+poly+'" fill="none" stroke="'+color+'" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" class="animated-line"/>'+points.map(p=>'<circle class="trend-point" cx="'+p.x+'" cy="'+p.y+'" r="5" fill="'+color+'" data-trend-year="'+p.year+'" data-trend-category="'+esc(s.category)+'" tabindex="0"><title>'+esc(settingsLabel('project_category',s.category))+' · '+p.year+' · '+p.items.length+' projet(s) · '+money(p.amount)+'</title></circle>').join('');}).join('');
  const labels=years.map((y,i)=>'<text x="'+(l+(years.length===1?pw/2:i*pw/(years.length-1)))+'" y="'+(h-15)+'" text-anchor="middle" class="axis-label">'+y+'</text>').join('');
  const legend=series.map(s=>'<span><i style="background:'+categoryColor(s.category,cats)+'"></i>'+esc(settingsLabel('project_category',s.category))+'</span>').join('');
- $('#allocationTrendChart').innerHTML='<div class="trend-legend">'+legend+'</div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="trend-svg">'+grid+lines+labels+'</svg></div>';
- document.querySelectorAll('[data-trend-year]').forEach(el=>el.addEventListener('click',()=>showChartDetail('trend','trendCategory',el.dataset.trendYear,el.dataset.trendCategory)));
+ root.querySelector('#allocationTrendChart').innerHTML='<div class="trend-legend">'+legend+'</div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="trend-svg">'+grid+lines+labels+'</svg></div>';
+ if(root===document)root.querySelectorAll('#allocationTrendChart [data-trend-year]').forEach(el=>el.addEventListener('click',()=>showChartDetail('trend','trendCategory',el.dataset.trendYear,el.dataset.trendCategory)));
 }
 function showChartDetail(panel,key,value,label){
  let items=key==='trendCategory'?allProjects.filter(p=>p.category===label&&Number(p.initial_programming_year)===Number(value)):dashboardSubset;
