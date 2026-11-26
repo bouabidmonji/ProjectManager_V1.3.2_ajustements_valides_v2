@@ -36,7 +36,7 @@ function applyLanguage(lang){
  localStorage.setItem('pm-language',currentLang);applyModuleLanguage();if(currentUser?.role==='admin'&&!$('#settingsPage').classList.contains('hidden'))loadSettings().catch(e=>console.error(e));if(currentUser&&!$('#projectsPage').classList.contains('hidden'))loadProjects().catch(e=>console.error(e));if(currentUser&&!$('#documentsPage').classList.contains('hidden'))loadDocuments().catch(e=>console.error(e));if(currentUser&&!$('#gisPage').classList.contains('hidden'))loadGis(false).catch(e=>console.error(e));if(currentUser&&!$('#usersPage').classList.contains('hidden'))loadUsers().catch(e=>console.error(e));if(allProjects.length&&!$('#dashboardPage').classList.contains('hidden'))renderDashboard();
 }
 function showLogin(){$('#loginView').classList.remove('hidden');$('#appView').classList.add('hidden');}
-function showApp(){$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');$('#userLabel').textContent=currentUser.name+' · '+currentUser.role;$('#welcome').textContent='Connecté : '+currentUser.name;$('#usersNav').classList.toggle('hidden',currentUser.role!=='admin');$('#settingsNav').classList.toggle('hidden',currentUser.role!=='admin');}
+function showApp(){$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');$('#userLabel').textContent=currentUser.name+' · '+({admin:currentLang==='ar'?'مسؤول': 'Administrateur',technical:currentLang==='ar'?'فني':'Service technique',finance:currentLang==='ar'?'مالي':'Service financier',viewer:currentLang==='ar'?'للاطلاع فقط':'Consultation seule'}[currentUser.role]||currentUser.role);$('#welcome').textContent=(currentLang==='ar'?'متصل: ':'Connecté : ')+currentUser.name;$('#usersNav').classList.toggle('hidden',currentUser.role!=='admin');$('#settingsNav').classList.toggle('hidden',currentUser.role!=='admin');}
 function contractEnd(p){if(!p.start_date||!p.duration_months)return null;const d=new Date(String(p.start_date).slice(0,10)+'T00:00:00');if(isNaN(d))return null;d.setMonth(d.getMonth()+Number(p.duration_months));return d;}
 function lateProjects(items){const now=new Date();now.setHours(0,0,0,0);return items.filter(p=>!['completed','cancelled'].includes(p.operational_status)).filter(p=>{const d=contractEnd(p);return d&&d<now;});}
 function renderDashboard(){
@@ -55,7 +55,7 @@ function renderDashboard(){
  $('#kProvisional').textContent=money(provisionalTotal);$('#kProvisionalSub').textContent=currentLang==='ar'?provisional.length+' مشروع منجز دون غلق نهائي':provisional.length+' projet(s) achevé(s) non clôturé(s)';
  $('#kFinalResidual').textContent=money(finalTotal);$('#kFinalSub').textContent=currentLang==='ar'?finalClosed.length+' مشروع مغلق نهائيا':finalClosed.length+' projet(s) clôturé(s) définitivement';
  bindKpiDrilldowns();
- renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);
+ renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);translateUiTree();
 }
 function showKpiDetail(kind){
  const rows=dashboardSubset||[];let title='',items=[];
@@ -68,7 +68,7 @@ function showKpiDetail(kind){
  host.innerHTML='<div class="kpi-drilldown-head"><div><b>'+esc(title)+'</b><small>'+items.length+' projet(s) · '+money(sum(items,kind==='provisional'?'provisional_balance':kind==='final'?'final_residual':'updated_cost'))+'</small></div><button type="button" class="detail-close" id="closeKpiDrilldown">Fermer</button></div><div class="kpi-drilldown-list">'+(items.length?items.map(p=>'<button type="button" data-kpi-project="'+p.id+'"><b>'+esc(p.project_code)+'</b><span>'+esc(p.title)+'</span><small>'+esc(p.closure_status||statusLabel(p.operational_status))+' · '+money(kind==='provisional'?p.provisional_balance:kind==='final'?p.final_residual:p.updated_cost)+'</small></button>').join(''):'<p class="muted">Aucun projet correspondant.</p>')+'</div>';
  host.classList.remove('hidden');host.scrollIntoView({behavior:'smooth',block:'nearest'});
  $('#closeKpiDrilldown').onclick=()=>host.classList.add('hidden');
- host.querySelectorAll('[data-kpi-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.kpiProject)));
+ host.querySelectorAll('[data-kpi-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.kpiProject)));translateUiTree();
 }
 function bindKpiDrilldowns(){
  const map={kpiLate:'late',kpiBlocked:'blocked',kpiProvisional:'provisional',kpiFinal:'final',kpiClosureOverdue:'closure'};
@@ -214,7 +214,7 @@ const detailSections=[...$('#detailContent').querySelectorAll('.detail-section')
   $('#detailContent').prepend(tabBar);
   detailSections.forEach((section,index)=>{section.dataset.detailSection=String(index);section.hidden=index!==0||(index===1&&!canTech&&!canReadAll)||(index===2&&!canFinance&&!canReadAll);});
   tabBar.querySelectorAll('[data-detail-tab]').forEach(btn=>btn.addEventListener('click',()=>{const target=Number(btn.dataset.detailTab);detailSections.forEach((section,index)=>section.hidden=index!==target||(index===1&&!canTech&&!canReadAll)||(index===2&&!canFinance&&!canReadAll));tabBar.querySelectorAll('.detail-tab').forEach(x=>x.classList.toggle('active',x===btn));}));
-  $('#detailDialog').showModal();
+  translateUiTree();$('#detailDialog').showModal();
   document.querySelectorAll('.assignment-form').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());try{await api('/projects/'+activeProjectId+'/responsibilities',{method:'PUT',body:JSON.stringify({role:form.dataset.assignmentRole,user_id:Number(data.user_id)})});await loadDashboard();await openProject(activeProjectId);}catch(err){form.querySelector('.form-message').textContent=err.message;}}));
   document.querySelectorAll('.profile-edit[data-edit-role]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());for(const k of Object.keys(data))if(data[k]==='')data[k]=null;for(const [k,v] of Object.entries(data))if(form.elements[k]?.type==='number'&&v!==null)data[k]=Number(v);try{await api('/projects/'+activeProjectId,{method:'PUT',body:JSON.stringify(data)});await loadDashboard();await openProject(activeProjectId);}catch(err){form.querySelector('.form-message').textContent=err.message;}}));
   const ff=$('#followupForm');if(ff)ff.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(ff).entries());for(const k of Object.keys(data))if(data[k]==='')data[k]=null;if(data.physical_progress!==null)data.physical_progress=Number(data.physical_progress);try{await api('/projects/'+activeProjectId+'/followups',{method:'POST',body:JSON.stringify(data)});await loadDashboard();await openProject(activeProjectId);}catch(err){ff.querySelector('.form-message').textContent=err.message;}});
