@@ -3,12 +3,12 @@ const $=s=>document.querySelector(s);
 let currentUser=null,activeProjectId=null,allProjects=[],dashboardSubset=[],trendSelected=null,currentLang='fr',gisMap=null,gisLayers=null,gisRecords=[],gisPending=null,gisActive=null,appSettings=[];
 const palette=['#2676a5','#e59b45','#8b78bd','#d46c72','#8b9baa','#c06a9b','#7e9b42','#4b9aaf','#b17c4d','#6b78a8'];
 function categoryColor(category,categories){const index=categories.indexOf(category);return palette[(index<0?0:index)%palette.length];}
-const money=v=>new Intl.NumberFormat('fr-TN',{style:'decimal',maximumFractionDigits:0}).format(Number(v||0))+' DT';
-const pct=v=>Number(v||0).toLocaleString('fr-TN',{maximumFractionDigits:1})+' %';
+const money=v=>new Intl.NumberFormat(currentLang==='ar'?'ar-TN':'fr-TN',{style:'decimal',maximumFractionDigits:0}).format(Number(v||0))+(currentLang==='ar'?' د.ت':' DT');
+const pct=v=>Number(v||0).toLocaleString(currentLang==='ar'?'ar-TN':'fr-TN',{maximumFractionDigits:1})+' %';
 const statusLabel=s=>{const configured=typeof settingsLabel==='function'?settingsLabel('operational_status',s):null;if(configured&&configured!==s)return configured;return currentLang==='ar'?({not_started:'لم ينطلق',in_progress:'في طور الإنجاز',blocked:'معطل / متوقف',completed:'منجز',cancelled:'ملغى'}[s]||s||'—'):({not_started:'Non démarré',in_progress:'En cours',blocked:'Bloqué / suspendu',completed:'Achevé',cancelled:'Annulé'}[s]||s||'—');};
 const sum=(a,k)=>a.reduce((n,p)=>n+Number(p[k]||0),0);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function dateFR(v){if(!v)return '—';const d=new Date(String(v).slice(0,10)+'T00:00:00');return isNaN(d)?'—':d.toLocaleDateString('fr-FR');}
+function dateFR(v){if(!v)return '—';const d=new Date(String(v).slice(0,10)+'T00:00:00');return isNaN(d)?'—':d.toLocaleDateString(currentLang==='ar'?'ar-TN':'fr-FR');}
 async function api(url,options={}){const r=await fetch('/api'+url,{...options,credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Erreur API');return d;}
 const translations={
  fr:{dashboard:'Tableau de bord',projects:'Projets',documents:'Documents',gis:'SIG / Cartographie',users:'Utilisateurs',logout:'Déconnexion',login:'Se connecter',loginTitle:'Project Manager',loginSub:'Commune de Tataouine · Version web V2',total:'Nombre total de projets',consumption:'Taux de consommation des crédits',late:'Projets en retard',closureOverdue:'Clôtures dépassées',done:'Projets réalisés',blocked:'Projets bloqués',provisional:'Solde provisoire des projets achevés',final:'Reliquat définitif',year:'Répartition par année',status:'État des projets',funding:'Répartition par source de financement',category:'Crédits alloués et consommés par catégorie',balance:'Évolution des crédits alloués par catégorie',recent:'Projets récemment actualisés',alerts:'Points de vigilance',search:'Rechercher code, intitulé ou catégorie',allYears:'Toutes les années',allStates:'Tous les états',allCategories:'Toutes les catégories',newProject:'Nouveau projet',language:'Langue'},
@@ -160,7 +160,7 @@ function renderRecent(rows){
 function renderAlerts(rows){
  const alerts=[];rows.forEach(p=>{
  if(p.operational_status==='blocked')alerts.push({kind:'danger',title:p.title,label:'Projet bloqué',detail:p.blockage_reason||'Motif de blocage non renseigné'});
- const end=contractEnd(p);if(end&&!['completed','cancelled'].includes(p.operational_status)&&end<new Date(new Date().setHours(0,0,0,0)))alerts.push({kind:'danger',title:p.title,label:'Échéance contractuelle dépassée',detail:'Fin prévue : '+end.toLocaleDateString('fr-FR')});
+ const end=contractEnd(p);if(end&&!['completed','cancelled'].includes(p.operational_status)&&end<new Date(new Date().setHours(0,0,0,0)))alerts.push({kind:'danger',title:p.title,label:'Échéance contractuelle dépassée',detail:(currentLang==='ar'?'تاريخ الانتهاء المتوقع: ':'Fin prévue : ')+end.toLocaleDateString(currentLang==='ar'?'ar-TN':'fr-FR')});
  if(p.operational_status==='in_progress'&&!p.last_followup_date)alerts.push({kind:'warning',title:p.title,label:'Suivi à actualiser',detail:'Aucune date de suivi disponible.'});
  });
  $('#alertsList').innerHTML=alerts.length?alerts.slice(0,14).map(a=>'<div class="alert-item '+a.kind+'"><b>'+esc(a.title)+'</b><span>'+esc(a.label)+' — '+esc(a.detail)+'</span></div>').join(''):'<p class="muted">Aucun point de vigilance calculable à partir des dates et statuts renseignés.</p>';
@@ -289,7 +289,7 @@ uiTextPairs.push(...[["Code projet","رمز المشروع"],["Année de réalis
 function translateUiTree(){
  const ar=currentLang==='ar';
  const mapText=value=>{const raw=String(value??''),trimmed=raw.trim();if(!trimmed)return raw;for(const pair of uiTextPairs){if(trimmed===pair[0])return raw.replace(trimmed,ar?pair[1]:pair[0]);if(trimmed===pair[1])return raw.replace(trimmed,ar?pair[1]:pair[0]);}return raw;};
- const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while((node=walker.nextNode())){const parent=node.parentElement;if(!parent||parent.closest('script,style,textarea,code,pre,#detailTitle,#detailCode,#userLabel,.detail-field b,.gis-select-feature,.gis-feature small,.gis-feature b,[contenteditable="true"],[data-user-content]')||(parent.closest('td')&&!parent.closest('button,a,.history-changes b')))continue;const next=mapText(node.nodeValue);if(next!==node.nodeValue)node.nodeValue=next;}
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while((node=walker.nextNode())){const parent=node.parentElement;if(!parent||parent.closest('script,style,textarea,code,pre,#detailTitle,#detailCode,#userLabel,.detail-field b,.alert-item b,.gis-select-feature,.gis-feature small,.gis-feature b,[contenteditable="true"],[data-user-content]')||(parent.closest('td')&&!parent.closest('button,a,.history-changes b')))continue;const next=mapText(node.nodeValue);if(next!==node.nodeValue)node.nodeValue=next;}
  document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{for(const attr of ['placeholder','title','aria-label'])if(el.hasAttribute(attr)){const old=el.getAttribute(attr),next=mapText(old);if(next!==old)el.setAttribute(attr,next);}});
  document.querySelectorAll('input:not([type="number"]):not([type="date"]):not([type="time"]):not([type="color"]):not([type="checkbox"]),select,textarea').forEach(el=>{el.dir=ar?'rtl':'ltr';el.lang=currentLang;});
  document.querySelectorAll('button,a,th,td,label,.panel-head,.toolbar').forEach(el=>{el.dir=ar?'rtl':'ltr';});
