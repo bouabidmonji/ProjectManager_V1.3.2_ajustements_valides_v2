@@ -24,6 +24,7 @@ function shell(){
  $('meetingExit').onclick=()=>nav('dashboard');$('reportRefresh').onclick=load;$('generateReport').onclick=generate;renderMeeting();preview();
 }
 function meetingRows(){let yr=$('meetingYear').value,cat=$('meetingCat').value,st=$('meetingStatus').value;return allProjects.filter(p=>(!yr||String(p.initial_programming_year||'')===yr)&&(!cat||p.category===cat)&&(!st||p.operational_status===st));}
+function filtered(pre){let v=k=>$('report'+k).value,yr=v('Year'),cat=v('Cat'),st=v('Status'),mgr=v('Manager'),q=v('Search').trim().toLowerCase();return items.filter(p=>(!yr||String(p.initial_programming_year||'')===yr)&&(!cat||p.category===cat)&&(!st||p.operational_status===st)&&(!mgr||managers[p.id]===mgr)&&(!q||(String(p.project_code)+' '+String(p.title)).toLowerCase().includes(q)));}
 function end(p){if(typeof contractEnd==='function')return contractEnd(p);if(!p.start_date||!p.duration_months)return null;let d=new Date(String(p.start_date).slice(0,10)+'T00:00:00');if(isNaN(d))return null;d.setMonth(d.getMonth()+Number(p.duration_months));return d;}
 function late(p){let d=end(p),n=new Date();n.setHours(0,0,0,0);return d&&d<n&&!['completed','cancelled'].includes(p.operational_status);}
 function manager(p){return managers[p.id]||'—';}
