@@ -184,3 +184,34 @@ body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
 #gisFeatureForm input[readonly],#gisFeatureForm textarea[readonly]{background:#f3f6f9;color:#53677d;cursor:default}
 #gisFeatureForm .edit-grid{margin-bottom:10px}
 @media(max-width:650px){.document-preview-dialog{width:98vw;height:92vh;padding:9px}.document-preview-actions{gap:6px}.document-preview-actions a{font-size:10px}.document-preview-dialog .detail-head h2{font-size:14px}}
+
+
+/* Internationalisation FR/AR : direction cohérente de tous les modules */
+html[dir="rtl"],body.rtl{direction:rtl}
+body.rtl main{margin-left:0;margin-right:248px}
+body.rtl .sidebar{left:auto;right:0}
+body.rtl .sidebar nav .nav{text-align:right}
+body.rtl main>header,body.rtl .header-tools,body.rtl .panel-head,
+body.rtl .toolbar,body.rtl .dashboard-toolbar,body.rtl .document-preview-dialog .detail-head,
+body.rtl .detail-head,body.rtl .gis-feature,body.rtl .gis-actions,
+body.rtl .document-file-actions{direction:rtl}
+body.rtl main>header{flex-direction:row}
+body.rtl input,body.rtl select,body.rtl textarea{direction:rtl;text-align:right}
+body.rtl input[type="number"],body.rtl input[type="date"],body.rtl input[type="time"],
+body.rtl input[type="color"],body.rtl input[type="checkbox"]{direction:ltr}
+body.rtl button,body.rtl a,body.rtl label,body.rtl th,body.rtl td{text-align:start}
+body.rtl .table-wrap{direction:rtl}
+body.rtl .table-wrap table{direction:rtl}
+body.rtl .detail-tabs{direction:rtl}
+body.rtl .detail-section,body.rtl .detail-field,body.rtl .profile-edit,
+body.rtl .edit-grid,body.rtl .settings-toolbar{direction:rtl}
+body.rtl .gis-feature .link{text-align:right}
+body.rtl .gis-feature .secondary{margin-inline-start:0}
+body.rtl .category-values{text-align:right}
+body.rtl .category-legend,body.rtl .trend-filters,body.rtl .year-legend{direction:rtl}
+body.rtl .kpi-groups .kpi{padding-left:16px;padding-right:58px}
+body.rtl .kpi-groups .kpi-icon{left:auto;right:16px}
+body.rtl .kpi-groups .kpi-green{padding-right:58px;padding-left:92px}
+body.rtl .kpi-consumption-ring{right:auto;left:18px}
+body.rtl .form-message{margin-left:0;margin-right:10px}
+@media(max-width:700px){body.rtl main{margin-left:0;margin-right:0}body.rtl .header-tools{flex-wrap:wrap}}
