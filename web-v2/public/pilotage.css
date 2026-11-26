@@ -55,3 +55,17 @@
 .report-section td{border:1px solid #aeb8c2}
 .report-section table{border-collapse:collapse}
 @media print{.report-cover{background:#fff}.report-section{break-inside:avoid}.report-section h3{color:#17476f}}
+
+/* Filtres du rapport : restent accessibles pendant le défilement de l'aperçu */
+.report-filter-sticky{position:sticky;top:0;z-index:40;background:#fff;box-shadow:0 5px 14px #1d355710;border:1px solid #dce5ee;padding:14px;margin:0 0 16px}
+.report-filter-sticky h3{margin:0 0 10px}
+.report-filter-sticky .pilotage-filters{margin-bottom:10px}
+.report-filter-sticky .muted{margin:8px 0 0}
+.meeting-native-charts{margin-top:16px}
+.meeting-native-charts .panel{min-width:0;overflow:hidden}
+.meeting-native-charts .trend-filters{margin:8px 0}
+.meeting-native-charts .trend-chart,.meeting-native-charts .chart-area{min-width:0}
+.meeting-native-charts .svg-scroll{max-width:100%;overflow-x:auto}
+.meeting-native-charts .donut-layout{flex-wrap:wrap}
+@media(max-width:760px){.report-filter-sticky{top:0;padding:10px}.meeting-native-charts{grid-template-columns:1fr}}
+@media print{.report-filter-sticky{position:static;box-shadow:none}}
