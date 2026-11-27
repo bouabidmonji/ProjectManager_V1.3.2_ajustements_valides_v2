@@ -52,7 +52,7 @@ function closeoutInfo(p){
   else if(!definitive){if(warrantyEnd&&today<warrantyEnd){status='En période de garantie';code='warranty';}else{status='Réception définitive à enregistrer';code='awaiting_definitive';}}
   else if(warrantyEnd&&definitive<warrantyEnd){status='Réception définitive antérieure à la fin de garantie';code='invalid_definitive_date';}
   else if(closure&&settlement&&closure>=definitive&&closure>=settlement){status='Clôturé définitivement · marché';code='closed';}
-  else if(deadline&&today>deadline){status='Délai de clôture dépassé';code='overdue';}
+  else if(deadline&&today>deadline&&!closure){status='Délai de clôture dépassé';code='overdue';}
   else if(closure||settlement){status='Clôture incomplète';code='incomplete';}
   else{status='À clôturer';code='to_close';}
  }else if(type){status='Type de procédure à vérifier';code='unknown';}
