@@ -464,3 +464,12 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
 #dashboardPage .annual-consumption-svg{
   overflow:visible;
 }
+
+
+/* Axe des montants : colonne dédiée à gauche du graphique */
+#dashboardPage .annual-consumption-svg .axis-money-label{
+  font-size:10px;
+  font-weight:700;
+  text-anchor:start;
+  fill:#26384d;
+}
