@@ -454,3 +454,13 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
     grid-row:auto;
   }
 }
+
+
+/* Axe vertical gauche du graphique annuel : libellés compacts et lisibles */
+#dashboardPage .annual-consumption-svg .axis-label{
+  font-size:10px;
+  letter-spacing:-.15px;
+}
+#dashboardPage .annual-consumption-svg{
+  overflow:visible;
+}
