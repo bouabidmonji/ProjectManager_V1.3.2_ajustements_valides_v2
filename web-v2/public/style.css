@@ -259,3 +259,52 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
 .annual-rate-point circle{stroke:#047857;stroke-width:3.5}
 .annual-consumption-legend{color:#26384d;font-weight:650}
 .annual-consumption-filter{color:#26384d;font-weight:650}
+
+
+/* FIX DEFINITIF — ordre et largeur des rangées du tableau de bord.
+   Ces sélecteurs sont volontairement plus spécifiques que les anciennes
+   règles .charts-grid afin d'éviter qu'elles réécrivent la disposition. */
+.dashboard-grid.charts-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-auto-flow:row;
+  gap:14px;
+}
+.dashboard-grid.charts-grid > article.wide-chart{
+  grid-column:1 / -1;
+  grid-row:auto;
+  min-width:0;
+}
+.dashboard-grid.charts-grid > article.trend-panel,
+.dashboard-grid.charts-grid > article.annual-panel,
+.dashboard-grid.charts-grid > article.compact-chart{
+  grid-column:span 1;
+  grid-row:auto;
+  min-width:0;
+}
+.dashboard-grid.charts-grid > article.annual-panel{
+  overflow:hidden;
+}
+.dashboard-grid.charts-grid > article.annual-panel .annual-consumption-chart{
+  width:100%;
+  min-width:0;
+  overflow-x:auto;
+}
+.dashboard-grid.charts-grid > article.annual-panel .annual-consumption-svg{
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+}
+@media(max-width:900px){
+  .dashboard-grid.charts-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .dashboard-grid.charts-grid > article.wide-chart,
+  .dashboard-grid.charts-grid > article.trend-panel,
+  .dashboard-grid.charts-grid > article.annual-panel,
+  .dashboard-grid.charts-grid > article.compact-chart{
+    grid-column:1 / -1;
+    grid-row:auto;
+  }
+}
