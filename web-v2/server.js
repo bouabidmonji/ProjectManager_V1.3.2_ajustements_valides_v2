@@ -21,7 +21,7 @@ const documentUpload=multer({storage:multer.diskStorage({destination:(_req,_file
 async function validDocumentSignature(file){const h=await fsp.open(file.path,'r');try{const b=Buffer.alloc(8);await h.read(b,0,8,0);const ext=path.extname(file.originalname).toLowerCase();return ext==='.pdf'?b.subarray(0,5).toString()==='%PDF-':(['.jpg','.jpeg'].includes(ext)?b[0]===0xff&&b[1]===0xd8&&b[2]===0xff:ext==='.png'?b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):false);}finally{await h.close();}}
 function isoDate(value){
  if(!value)return null;
- const raw=String(value).trim(),match=raw.match(/^(\d{4}-\d{2}-\d{2})/);
+ const raw=String(value).trim(),match=raw.match(/^(\d{4}-\d{2}-\d{2})$/);
  if(match)return match[1];
  const parsed=value instanceof Date?value:new Date(raw);
  if(Number.isNaN(parsed.getTime()))return null;
