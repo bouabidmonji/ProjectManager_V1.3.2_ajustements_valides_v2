@@ -21,10 +21,13 @@ const documentUpload=multer({storage:multer.diskStorage({destination:(_req,_file
 async function validDocumentSignature(file){const h=await fsp.open(file.path,'r');try{const b=Buffer.alloc(8);await h.read(b,0,8,0);const ext=path.extname(file.originalname).toLowerCase();return ext==='.pdf'?b.subarray(0,5).toString()==='%PDF-':(['.jpg','.jpeg'].includes(ext)?b[0]===0xff&&b[1]===0xd8&&b[2]===0xff:ext==='.png'?b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):false);}finally{await h.close();}}
 function isoDate(value){
  if(!value)return null;
- if(value instanceof Date&&!Number.isNaN(value.getTime()))return value.toISOString().slice(0,10);
  const raw=String(value).trim(),match=raw.match(/^(\d{4}-\d{2}-\d{2})/);
  if(match)return match[1];
- const parsed=new Date(raw);return Number.isNaN(parsed.getTime())?null:parsed.toISOString().slice(0,10);
+ const parsed=value instanceof Date?value:new Date(raw);
+ if(Number.isNaN(parsed.getTime()))return null;
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Tunis',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(parsed);
+ const get=k=>parts.find(x=>x.type===k)?.value||'';
+ return get('year')+'-'+get('month')+'-'+get('day');
 }
 function addMonthsISO(value,months){if(!value)return null;const m=isoDate(value)?.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;const first=new Date(Number(m[1]),Number(m[2])-1,1,12);first.setMonth(first.getMonth()+Number(months||0));const last=new Date(first.getFullYear(),first.getMonth()+1,0,12).getDate();first.setDate(Math.min(Number(m[3]),last));return first.getFullYear()+'-'+String(first.getMonth()+1).padStart(2,'0')+'-'+String(first.getDate()).padStart(2,'0');}
 function closeoutInfo(p){
