@@ -75,7 +75,7 @@ function showKpiDetail(kind){
  const rows=dashboardSubset||[];let title='',items=[];
  if(kind==='late'){title='Projets en retard';items=lateProjects(rows);}
  if(kind==='blocked'){title='Projets bloqués';items=rows.filter(p=>p.operational_status==='blocked');}
- if(kind==='provisional'){title='Projets avec solde provisoire';items=rows.filter(p=>p.operational_status==='completed'&&!p.financially_closed);}
+ if(kind==='provisional'){title='Projets avec solde provisoire';items=rows.filter(p=>p.operational_status==='completed'&&!p.financially_closed&&Number(p.provisional_balance)>0);}
  if(kind==='final'){title='Projets avec reliquat définitif';items=rows.filter(p=>p.operational_status==='completed'&&p.financially_closed);}
  if(kind==='closure'){title='Projets dont le délai de clôture est dépassé';items=rows.filter(p=>p.operational_status==='completed'&&p.closure_code==='overdue');}
  const host=$('#kpiDrilldown');if(!host)return;
