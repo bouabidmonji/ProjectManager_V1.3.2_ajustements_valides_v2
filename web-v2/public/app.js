@@ -142,7 +142,7 @@ function renderCategoryChart(rows,root=document){
  const yMoney=v=>t+ph-(v/max)*ph;
  const yRate=v=>t+ph-(Math.max(0,Math.min(100,v))/100)*ph;
  const bw=Math.min(25,Math.max(12,pw/Math.max(1,data.length)*.19));
- const grid=[0,.25,.5,.75,1].map(v=>{const y=t+ph-v*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-10)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+axisMoney(max*v)+'</text><text x="'+(w-r+9)+'" y="'+(y+4)+'" class="axis-label">'+Math.round(v*100)+'%</text>';}).join('');
+ const grid=[0,.25,.5,.75,1].map(v=>{const y=t+ph-v*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="8" y="'+(y+4)+'" text-anchor="start" class="axis-label axis-money-label">'+axisMoney(max*v)+'</text><text x="'+(w-r+9)+'" y="'+(y+4)+'" class="axis-label">'+Math.round(v*100)+'%</text>';}).join('');
  const bars=data.map((d,i)=>{
   const x=xAt(i),ya=yMoney(d.allocated),yc=yMoney(d.consumed);
   const tip=(currentLang==='ar'?'السنة: ':'Année : ')+d.year+' · '+(currentLang==='ar'?'المخصص: ':'Alloué : ')+money(d.allocated)+' · '+(currentLang==='ar'?'المستهلك: ':'Consommé : ')+money(d.consumed)+' · '+(currentLang==='ar'?'نسبة الاستهلاك: ':'Taux de consommation : ')+pct(d.rate)+' · '+d.items.length+' projet(s)';
