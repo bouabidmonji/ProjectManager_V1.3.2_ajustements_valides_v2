@@ -76,7 +76,7 @@ function showKpiDetail(kind){
  if(kind==='late'){title='Projets en retard';items=lateProjects(rows);}
  if(kind==='blocked'){title='Projets bloqués';items=rows.filter(p=>p.operational_status==='blocked');}
  if(kind==='provisional'){title='Projets avec solde provisoire';items=rows.filter(p=>p.operational_status==='completed'&&!p.financially_closed&&Number(p.provisional_balance)>0);}
- if(kind==='final'){title='Projets avec reliquat définitif';items=rows.filter(p=>p.operational_status==='completed'&&p.financially_closed);}
+ if(kind==='final'){title='Projets avec reliquat définitif';items=rows.filter(p=>p.operational_status==='completed'&&p.financially_closed&&Number(p.final_residual)>0);}
  if(kind==='closure'){title='Projets dont le délai de clôture est dépassé';items=rows.filter(p=>p.operational_status==='completed'&&p.closure_code==='overdue');}
  const host=$('#kpiDrilldown');if(!host)return;
  host.innerHTML='<div class="kpi-drilldown-head"><div><b>'+esc(title)+'</b><small>'+items.length+' projet(s) · '+money(sum(items,kind==='provisional'?'provisional_balance':kind==='final'?'final_residual':'updated_cost'))+'</small></div><button type="button" class="detail-close" id="closeKpiDrilldown">Fermer</button></div><div class="kpi-drilldown-list">'+(items.length?items.map(p=>'<button type="button" data-kpi-project="'+p.id+'"><b>'+esc(p.project_code)+'</b><span>'+esc(p.title)+'</span><small>'+esc(p.closure_status||statusLabel(p.operational_status))+' · '+money(kind==='provisional'?p.provisional_balance:kind==='final'?p.final_residual:p.updated_cost)+'</small></button>').join(''):'<p class="muted">Aucun projet correspondant.</p>')+'</div>';
