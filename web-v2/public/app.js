@@ -136,12 +136,13 @@ function renderCategoryChart(rows,root=document){
   return {year,items,allocated,consumed,rate:allocated>0?consumed/allocated*100:0};
  });
  const max=Math.max(1,...data.flatMap(x=>[x.allocated,x.consumed]));
- const w=Math.max(590,data.length*125+130),h=300,l=82,r=72,t=30,b=52,pw=w-l-r,ph=h-t-b;
+ const w=Math.max(340,Math.floor(host.clientWidth||480)),h=300,l=72,r=42,t=34,b=48,pw=w-l-r,ph=h-t-b;
+ const axisMoney=v=>new Intl.NumberFormat(currentLang==='ar'?'ar-TN':'fr-FR',{notation:'compact',maximumFractionDigits:1}).format(v);
  const xAt=i=>l+(data.length===1?pw/2:i*pw/(data.length-1));
  const yMoney=v=>t+ph-(v/max)*ph;
  const yRate=v=>t+ph-(Math.max(0,Math.min(100,v))/100)*ph;
  const bw=Math.min(25,Math.max(12,pw/Math.max(1,data.length)*.19));
- const grid=[0,.25,.5,.75,1].map(v=>{const y=t+ph-v*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-10)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+money(max*v).replace(/ DT| د.ت/g,'')+'</text><text x="'+(w-r+9)+'" y="'+(y+4)+'" class="axis-label">'+Math.round(v*100)+'%</text>';}).join('');
+ const grid=[0,.25,.5,.75,1].map(v=>{const y=t+ph-v*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-10)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+axisMoney(max*v)+'</text><text x="'+(w-r+9)+'" y="'+(y+4)+'" class="axis-label">'+Math.round(v*100)+'%</text>';}).join('');
  const bars=data.map((d,i)=>{
   const x=xAt(i),ya=yMoney(d.allocated),yc=yMoney(d.consumed);
   const tip=(currentLang==='ar'?'السنة: ':'Année : ')+d.year+' · '+(currentLang==='ar'?'المخصص: ':'Alloué : ')+money(d.allocated)+' · '+(currentLang==='ar'?'المستهلك: ':'Consommé : ')+money(d.consumed)+' · '+(currentLang==='ar'?'نسبة الاستهلاك: ':'Taux de consommation : ')+pct(d.rate)+' · '+d.items.length+' projet(s)';
