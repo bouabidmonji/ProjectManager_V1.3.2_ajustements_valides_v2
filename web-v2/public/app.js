@@ -124,13 +124,44 @@ function bindDonut(panelKey,root=document){
  if(root===document)root.querySelectorAll('#'+panelKey+'Chart [data-key]').forEach(el=>el.addEventListener('click',()=>showChartDetail(panelKey,el.dataset.key,el.dataset.value,el.dataset.label)));
 }
 function renderCategoryChart(rows,root=document){
- const cats=[...new Set(rows.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
- if(!cats.length){root.querySelector('#categoryChart').innerHTML='<p class="muted">Aucune catégorie renseignée.</p>';return;}
- const max=Math.max(1,...cats.map(c=>sum(rows.filter(p=>p.category===c),'updated_cost')));
- const labels=currentLang==='ar'?['الاعتمادات المخصصة','الاعتمادات المستهلكة','نسبة الاستهلاك']:['Crédits alloués','Crédits consommés','Taux de consommation'];
- root.querySelector('#categoryChart').innerHTML='<div class="category-legend"><span><i class="bar-allocated"></i>'+labels[0]+'</span><span><i class="bar-consumed"></i>'+labels[1]+'</span><span><i class="bar-rate"></i>'+labels[2]+'</span></div>'+cats.map(c=>{const a=rows.filter(p=>p.category===c),alloc=sum(a,'updated_cost'),paid=sum(a,'consumed_credits'),rate=alloc?Math.min(100,paid/alloc*100):0,tip=currentLang==='ar'?settingsLabel('project_category',c)+' · '+a.length+' مشاريع · مخصص: '+money(alloc)+' · مستهلك: '+money(paid)+' · النسبة: '+pct(rate):settingsLabel('project_category',c)+' · '+a.length+' projet(s) · Alloué : '+money(alloc)+' · Consommé : '+money(paid)+' · Taux : '+pct(rate);const color=/infrastructure/i.test(c)?'#16877c':palette[cats.indexOf(c)%palette.length];return '<button class="category-row" style="--category-color:'+color+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'" data-category="'+esc(c)+'"><span class="category-name">'+esc(c)+' <small>'+a.length+' projet(s)</small></span><span class="bar-pair"><span class="bar-line"><i class="bar-allocated" style="width:0" data-width="'+alloc/max*100+'%"></i></span><span class="bar-line"><i class="bar-consumed" style="width:0" data-width="'+Math.min(100,paid/max*100)+'%"></i></span><span class="bar-line"><i class="bar-rate" style="width:0" data-width="'+rate+'%"></i></span></span><span class="category-values"><b>'+money(alloc)+'</b><small>'+money(paid)+' consommés</small><small class="rate-value">'+pct(rate)+(currentLang==='ar'?' استهلاك / اعتماد':' consommés / alloués')+'</small></span></button>';}).join('');
- requestAnimationFrame(()=>root.querySelectorAll('#categoryChart i[data-width]').forEach(el=>el.style.width=el.dataset.width));
- if(root===document)root.querySelectorAll('#categoryChart [data-category]').forEach(el=>el.addEventListener('click',()=>showChartDetail('category','category',el.dataset.category,el.dataset.category)));
+ const host=root.querySelector('#categoryChart');if(!host)return;
+ const years=[...new Set(rows.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
+ if(!years.length){host.innerHTML='<p class="muted">Aucune année de programmation renseignée.</p>';return;}
+ const filterId='consumptionYearFilter';
+ const selectedYear=root===document?(root.querySelector('#'+filterId)?.value||''): '';
+ const chartYears=selectedYear?years.filter(y=>String(y)===selectedYear):years;
+ const data=chartYears.map(year=>{
+  const items=rows.filter(p=>Number(p.initial_programming_year)===year);
+  const allocated=sum(items,'updated_cost'),consumed=sum(items,'consumed_credits');
+  return {year,items,allocated,consumed,rate:allocated>0?consumed/allocated*100:0};
+ });
+ const max=Math.max(1,...data.flatMap(x=>[x.allocated,x.consumed]));
+ const w=Math.max(590,data.length*125+130),h=300,l=82,r=72,t=30,b=52,pw=w-l-r,ph=h-t-b;
+ const xAt=i=>l+(data.length===1?pw/2:i*pw/(data.length-1));
+ const yMoney=v=>t+ph-(v/max)*ph;
+ const yRate=v=>t+ph-(Math.max(0,Math.min(100,v))/100)*ph;
+ const bw=Math.min(25,Math.max(12,pw/Math.max(1,data.length)*.19));
+ const grid=[0,.25,.5,.75,1].map(v=>{const y=t+ph-v*ph;return '<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" class="chart-grid"/><text x="'+(l-10)+'" y="'+(y+4)+'" text-anchor="end" class="axis-label">'+money(max*v).replace(/ DT| د.ت/g,'')+'</text><text x="'+(w-r+9)+'" y="'+(y+4)+'" class="axis-label">'+Math.round(v*100)+'%</text>';}).join('');
+ const bars=data.map((d,i)=>{
+  const x=xAt(i),ya=yMoney(d.allocated),yc=yMoney(d.consumed);
+  const tip=(currentLang==='ar'?'السنة: ':'Année : ')+d.year+' · '+(currentLang==='ar'?'المخصص: ':'Alloué : ')+money(d.allocated)+' · '+(currentLang==='ar'?'المستهلك: ':'Consommé : ')+money(d.consumed)+' · '+(currentLang==='ar'?'نسبة الاستهلاك: ':'Taux de consommation : ')+pct(d.rate)+' · '+d.items.length+' projet(s)';
+  return '<g class="annual-consumption-group" data-consumption-year="'+d.year+'" tabindex="0" role="button" aria-label="'+esc(tip)+'"><rect class="annual-bar-allocated" x="'+(x-bw-2)+'" y="'+ya+'" width="'+bw+'" height="'+(t+ph-ya)+'" rx="4"><title>'+esc(tip)+'</title></rect><rect class="annual-bar-consumed" x="'+(x+2)+'" y="'+yc+'" width="'+bw+'" height="'+(t+ph-yc)+'" rx="4"><title>'+esc(tip)+'</title></rect><text x="'+x+'" y="'+(h-16)+'" text-anchor="middle" class="axis-label">'+d.year+'</text><title>'+esc(tip)+'</title></g>';
+ }).join('');
+ const line=data.map((d,i)=>xAt(i)+','+yRate(d.rate)).join(' ');
+ const points=data.map((d,i)=>'<g class="annual-rate-point" data-consumption-year="'+d.year+'" tabindex="0" role="button"><circle cx="'+xAt(i)+'" cy="'+yRate(d.rate)+'" r="5.5"><title>'+d.year+' · '+pct(d.rate)+'</title></circle><text x="'+xAt(i)+'" y="'+(yRate(d.rate)-12)+'" text-anchor="middle" class="point-label">'+pct(d.rate)+'</text></g>').join('');
+ const legend='<div class="annual-consumption-legend"><span><i class="annual-bar-allocated"></i>'+(currentLang==='ar'?'الاعتمادات المخصصة':'Crédits alloués')+'</span><span><i class="annual-bar-consumed"></i>'+(currentLang==='ar'?'الاعتمادات المستهلكة':'Crédits consommés')+'</span><span><i class="annual-rate-key"></i>'+(currentLang==='ar'?'نسبة الاستهلاك':'Taux de consommation')+'</span></div>';
+ const filter='<label class="annual-consumption-filter">'+(currentLang==='ar'?'السنة':'Année')+'<select id="'+filterId+'"><option value="">'+(currentLang==='ar'?'كل السنوات':'Toutes les années')+'</option>'+years.map(y=>'<option value="'+y+'" '+(String(y)===selectedYear?'selected':'')+'>'+y+'</option>').join('')+'</select></label>';
+ host.innerHTML='<div class="annual-consumption-toolbar">'+filter+legend+'</div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="annual-consumption-svg">'+grid+bars+'<polyline points="'+line+'" class="annual-rate-line"/>'+points+'</svg></div><p class="chart-hint">'+(currentLang==='ar'?'انقر على سنة لعرض المشاريع غير المغلقة نهائيا ذات نسبة استهلاك ضعيفة (≤ 25%).':'Cliquez sur une année pour afficher les projets non clôturés définitivement dont le taux de consommation est faible (≤ 25 %).')+'</p>';
+ const select=host.querySelector('#'+filterId);if(select)select.addEventListener('change',()=>renderCategoryChart(rows,root));
+ host.querySelectorAll('[data-consumption-year]').forEach(el=>{const open=()=>showLowConsumptionProjects(Number(el.dataset.consumptionYear),rows,25);el.addEventListener('click',open);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});});
+}
+function showLowConsumptionProjects(year,rows,threshold=25){
+ const items=rows.filter(p=>Number(p.initial_programming_year)===year&&!p.financially_closed&&Number(p.updated_cost)>0&&(Number(p.consumed_credits||0)/Number(p.updated_cost))*100<=threshold);
+ const host=$('#categoryDetail');if(!host)return;
+ const title=(currentLang==='ar'?'مشاريع ذات استهلاك ضعيف — ':'Projets à faible consommation — ')+year;
+ host.innerHTML='<div class="detail-title"><div><b>'+esc(title)+'</b><small>'+items.length+' projet(s) · seuil ≤ '+threshold+' %</small></div><button class="detail-close" type="button">Fermer</button></div><div class="detail-items">'+(items.length?items.map(p=>{const rate=Number(p.updated_cost)>0?Number(p.consumed_credits||0)/Number(p.updated_cost)*100:0;return '<button data-open-project="'+p.id+'"><b>'+esc(p.project_code)+'</b> · '+esc(p.title)+'<small>'+statusLabel(p.operational_status)+' · '+pct(rate)+' · '+money(p.consumed_credits)+' / '+money(p.updated_cost)+'</small></button>';}).join(''):'<p class="muted">'+(currentLang==='ar'?'لا توجد مشاريع مطابقة لهذا المعيار.':'Aucun projet ne correspond à ce critère.')+'</p>')+'</div>';
+ host.classList.remove('hidden');host.querySelector('.detail-close').onclick=()=>host.classList.add('hidden');
+ host.querySelectorAll('[data-open-project]').forEach(b=>b.addEventListener('click',()=>openProject(b.dataset.openProject)));
 }
 function renderTrend(rows=allProjects,root=document){
  const years=[...new Set(rows.map(p=>Number(p.initial_programming_year)).filter(Boolean))].sort((a,b)=>a-b);
