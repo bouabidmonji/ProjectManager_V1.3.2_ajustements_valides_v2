@@ -34,7 +34,7 @@ function applyLanguage(lang){
  const set=(sel,value)=>{const el=$(sel);if(el)el.textContent=value;};
  const navs=document.querySelectorAll('.nav');if(navs[0])navs[0].textContent=t.dashboard;if(navs[1])navs[1].textContent=t.projects;if(navs[2])navs[2].textContent=t.documents;if(navs[3])navs[3].textContent=t.gis;if(navs[4])navs[4].textContent=t.users;if(navs[5])navs[5].textContent=ar?'الإعدادات':'Paramétrage';
  set('#languageCaption',t.language);set('#logoutBtn',t.logout);
- const headings=[...document.querySelectorAll('#dashboardPage h2')],headingMap=[t.year,(ar?'تطور الاعتمادات المخصصة حسب الصنف':'Évolution des crédits alloués par catégorie'),(ar?'الحالة التشغيلية للمشاريع':'État opérationnel des projets'),(ar?'التوزيع حسب مصادر التمويل':'Répartition par source de financement'),(ar?'الاعتمادات المخصصة والمستهلكة حسب الصنف':'Crédits alloués et consommés par catégorie'),t.recent,t.alerts];headings.forEach((el,i)=>{if(headingMap[i])el.textContent=headingMap[i];});
+ const headings=[...document.querySelectorAll('#dashboardPage h2')],headingMap=[t.year,(ar?'تطور الاعتمادات المخصصة حسب الصنف':'Évolution des crédits alloués par catégorie'),(ar?'الحالة التشغيلية للمشاريع':'État opérationnel des projets'),(ar?'التوزيع حسب مصادر التمويل':'Répartition par source de financement'),(ar?'الاعتمادات المخصصة والمستهلكة ونسبة الاستهلاك حسب السنة':'Crédits alloués, consommés et taux de consommation par année'),t.recent,t.alerts];headings.forEach((el,i)=>{if(headingMap[i])el.textContent=headingMap[i];});
  const labels=[...document.querySelectorAll('.kpi-label')],values=[t.total,t.done,t.late,t.blocked,t.closureOverdue,t.consumption,t.provisional,t.final];labels.forEach((el,i)=>{if(values[i])el.textContent=values[i];});
  const search=$('#projectSearch');if(search)search.placeholder=t.search;
  const year=$('#yearSearch'),state=$('#statusSearch'),cat=$('#categorySearch'),dashYear=$('#dashboardYear');
@@ -69,7 +69,7 @@ function renderDashboard(){
  $('#kProvisional').textContent=money(provisionalTotal);$('#kProvisionalSub').textContent=currentLang==='ar'?provisional.length+' مشروع منجز دون غلق نهائي':provisional.length+' projet(s) achevé(s) non clôturé(s)';
  $('#kFinalResidual').textContent=money(finalTotal);$('#kFinalSub').textContent=currentLang==='ar'?finalClosed.length+' مشروع مغلق نهائيا':finalClosed.length+' projet(s) clôturé(s) définitivement';
  bindKpiDrilldowns();
- renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(rows);renderTrend();renderRecent(rows);renderAlerts(rows);translateUiTree();
+ renderYearChart();renderStatusChart(rows);renderFundingChart(rows);renderCategoryChart(allProjects);renderTrend();renderRecent(rows);renderAlerts(rows);translateUiTree();
 }
 function showKpiDetail(kind){
  const rows=dashboardSubset||[];let title='',items=[];
