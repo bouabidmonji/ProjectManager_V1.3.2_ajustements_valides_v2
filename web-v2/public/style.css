@@ -49,8 +49,12 @@ body.rtl .kpi-consumption-ring{right:auto;left:18px}
 @media(max-width:700px){.kpi-consumption-ring{right:10px;top:50px;width:52px;height:52px}body.rtl .kpi-consumption-ring{right:auto;left:10px}}
 
 /* Dashboard compact layout and KPI drill-down */
-.charts-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.charts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .charts-grid .wide-chart{grid-column:1/-1}
+.charts-grid .trend-panel,.charts-grid .annual-panel{grid-column:span 1;min-width:0}
+.charts-grid .annual-panel{overflow:hidden}
+.charts-grid .annual-panel .annual-consumption-svg{width:100%;height:auto;display:block}
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr}.charts-grid .trend-panel,.charts-grid .annual-panel{grid-column:1/-1}}
 .charts-grid .compact-chart{min-height:250px;padding:15px}
 .charts-grid .compact-chart .donut-host{min-height:175px}
 .kpi-click{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
@@ -238,3 +242,14 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
 .annual-consumption-group:focus,.annual-rate-point:focus{outline:none}
 @keyframes annual-rate-draw{to{stroke-dashoffset:0}}
 @media(max-width:700px){.annual-consumption-toolbar{align-items:flex-start}.annual-consumption-legend{gap:9px}.annual-consumption-svg{min-width:560px}}
+
+/* Higher contrast and balanced dashboard chart rows */
+.annual-consumption-svg .axis-label{fill:#26384d;font-size:11px;font-weight:700}
+.annual-consumption-svg .point-label{fill:#102a43;font-size:11px;font-weight:800;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.annual-consumption-svg .chart-grid{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:3 3}
+.annual-bar-allocated{fill:#155e9a;background:#155e9a}
+.annual-bar-consumed{fill:#c2410c;background:#c2410c}
+.annual-rate-line{stroke:#047857;stroke-width:3.5}
+.annual-rate-point circle{stroke:#047857;stroke-width:3.5}
+.annual-consumption-legend{color:#26384d;font-weight:650}
+.annual-consumption-filter{color:#26384d;font-weight:650}
