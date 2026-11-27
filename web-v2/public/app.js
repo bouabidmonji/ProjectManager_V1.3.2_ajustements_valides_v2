@@ -136,8 +136,8 @@ function renderCategoryChart(rows,root=document){
   return {year,items,allocated,consumed,rate:allocated>0?consumed/allocated*100:0};
  });
  const max=Math.max(1,...data.flatMap(x=>[x.allocated,x.consumed]));
- const w=Math.max(340,Math.floor(host.clientWidth||480)),h=300,l=72,r=42,t=34,b=48,pw=w-l-r,ph=h-t-b;
- const axisMoney=v=>new Intl.NumberFormat(currentLang==='ar'?'ar-TN':'fr-FR',{notation:'compact',maximumFractionDigits:1}).format(v);
+ const w=Math.max(560,Math.floor(host.clientWidth||560)),h=300,l=92,r=42,t=34,b=48,pw=w-l-r,ph=h-t-b;
+ const axisMoney=v=>{const n=Math.abs(Number(v)||0);if(n>=1000000)return (v/1000000).toFixed(1).replace('.',',')+' M';if(n>=1000)return (v/1000).toFixed(0)+' k';return new Intl.NumberFormat(currentLang==='ar'?'ar-TN':'fr-FR',{maximumFractionDigits:0}).format(v);};
  const xAt=i=>l+(data.length===1?pw/2:i*pw/(data.length-1));
  const yMoney=v=>t+ph-(v/max)*ph;
  const yRate=v=>t+ph-(Math.max(0,Math.min(100,v))/100)*ph;
