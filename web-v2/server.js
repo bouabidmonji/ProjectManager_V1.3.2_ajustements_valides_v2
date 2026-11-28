@@ -167,7 +167,7 @@ app.put('/api/projects/:id',authRequired,async(req,res)=>{const b=req.body||{},r
  const finance=['initial_cost','updated_cost','self_funding','loan','exceptional_aid','unassigned_aid','assigned_aid','other_funding','realized_resources','final_payment_date','closure_date'];
  const allowed=role==='admin'?[...technical,...finance,'title','procedure_type']:role==='technical'?technical:role==='finance'?finance:[];
  if(!allowed.length)return res.status(403).json({error:'Profil en lecture seule.'});
- const keys=Object.keys(b);const denied=keys.filter(k=>!allowed.includes(k));
+ const keys=Object.keys(b);if(b.initial_cost!==undefined&&b.initial_cost!==null&&(!Number.isFinite(Number(b.initial_cost))||Number(b.initial_cost)<0))return res.status(400).json({error:'Le montant initial programmé doit être positif ou nul.'});const denied=keys.filter(k=>!allowed.includes(k));
  if(denied.length)return res.status(403).json({error:'Votre profil ne peut pas modifier : '+denied.join(', ')});
  const fields=keys.filter(k=>allowed.includes(k));if(!fields.length)return res.status(400).json({error:'Aucune donnée modifiable transmise.'});
  const c=await pool.connect();try{await c.query('BEGIN');
