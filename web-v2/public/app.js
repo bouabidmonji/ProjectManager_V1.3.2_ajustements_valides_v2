@@ -100,7 +100,7 @@ function renderYearChart(root=document,rows=allProjects){
  const line=vals.map((p,i)=>xAt(i)+','+yProgress(p.progress)).join(' ');
  const marks=vals.map((p,i)=>'<g class="year-mark" data-year="'+p.year+'" tabindex="0"><circle class="year-progress-point" cx="'+xAt(i)+'" cy="'+yProgress(p.progress)+'" r="5"/><text x="'+xAt(i)+'" y="'+(yProgress(p.progress)-12)+'" text-anchor="middle" class="point-label">'+p.progress.toFixed(1)+'%</text><text x="'+xAt(i)+'" y="'+(h-13)+'" text-anchor="middle" class="axis-label">'+p.year+'</text><title>'+p.year+' · '+p.count+' projet(s) · Avancement physique moyen : '+p.progress.toFixed(1)+'% · '+money(p.budget)+'</title></g>').join('');
  root.querySelector('#yearChart').innerHTML='<div class="year-legend"><span><i class="year-legend-count"></i>Nombre de projets</span><span><i class="year-legend-progress"></i>Avancement physique moyen</span></div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="year-svg">'+grid+bars+'<polyline points="'+line+'" class="year-progress-line"/>'+marks+'</svg></div><p class="chart-hint">Colonnes : nombre de projets. Courbe : avancement physique moyen par année de programmation. Cliquez sur une année pour filtrer le tableau de bord.</p>';
- if(root===document)root.querySelectorAll('#yearChart [data-year]').forEach(el=>el.addEventListener('click',()=>{$('#dashboardYear').value=el.dataset.year;renderDashboard();}));
+ root.querySelectorAll('#yearChart [data-year]').forEach(el=>el.addEventListener('click',()=>{if(root===document){$('#dashboardYear').value=el.dataset.year;renderDashboard();}else if($('#meetingYear')){$('#meetingYear').value=el.dataset.year;renderMeeting();}}));
 }
 function donutMarkup(items,total,label){
  const valid=items.filter(x=>x.value>0);if(!valid.length)return '<p class="muted">Aucune donnée disponible.</p>';
@@ -121,7 +121,7 @@ function renderFundingChart(rows,root=document){
 }
 function bindDonut(panelKey,root=document){
  const arcs=[...root.querySelectorAll('#'+panelKey+'Chart .donut-arc')];arcs.forEach((el,i)=>{const target=el.dataset.dash;el.style.transition='stroke-dasharray 1.25s cubic-bezier(.2,.8,.2,1) '+(i*.12)+'s';requestAnimationFrame(()=>el.setAttribute('stroke-dasharray',target));});
- if(root===document)root.querySelectorAll('#'+panelKey+'Chart [data-key]').forEach(el=>el.addEventListener('click',()=>showChartDetail(panelKey,el.dataset.key,el.dataset.value,el.dataset.label)));
+ root.querySelectorAll('#'+panelKey+'Chart [data-key]').forEach(el=>el.addEventListener('click',()=>showChartDetail(panelKey,el.dataset.key,el.dataset.value,el.dataset.label,root)));
 }
 function renderCategoryChart(rows,root=document){
  const host=root.querySelector('#categoryChart');if(!host)return;
@@ -154,11 +154,11 @@ function renderCategoryChart(rows,root=document){
  const filter='<label class="annual-consumption-filter">'+(currentLang==='ar'?'السنة':'Année')+'<select id="'+filterId+'"><option value="">'+(currentLang==='ar'?'كل السنوات':'Toutes les années')+'</option>'+years.map(y=>'<option value="'+y+'" '+(String(y)===selectedYear?'selected':'')+'>'+y+'</option>').join('')+'</select></label>';
  host.innerHTML='<div class="annual-consumption-toolbar">'+filter+legend+'</div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="annual-consumption-svg">'+grid+bars+'<polyline points="'+line+'" class="annual-rate-line"/>'+points+'</svg></div><p class="chart-hint">'+(currentLang==='ar'?'انقر على سنة لعرض المشاريع غير المغلقة نهائيا ذات نسبة استهلاك ضعيفة (≤ 25%).':'Cliquez sur une année pour afficher les projets non clôturés définitivement dont le taux de consommation est faible (≤ 25 %).')+'</p>';
  const select=host.querySelector('#'+filterId);if(select)select.addEventListener('change',()=>renderCategoryChart(rows,root));
- host.querySelectorAll('[data-consumption-year]').forEach(el=>{const open=()=>showLowConsumptionProjects(Number(el.dataset.consumptionYear),rows,25);el.addEventListener('click',open);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});});
+ host.querySelectorAll('[data-consumption-year]').forEach(el=>{const open=()=>showLowConsumptionProjects(Number(el.dataset.consumptionYear),rows,25,root);el.addEventListener('click',open);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});});
 }
-function showLowConsumptionProjects(year,rows,threshold=25){
+function showLowConsumptionProjects(year,rows,threshold=25,root=document){
  const items=rows.filter(p=>Number(p.initial_programming_year)===year&&!p.financially_closed&&Number(p.updated_cost)>0&&(Number(p.consumed_credits||0)/Number(p.updated_cost))*100<=threshold);
- const host=$('#categoryDetail');if(!host)return;
+ const host=root.querySelector('#categoryDetail');if(!host)return;
  const title=(currentLang==='ar'?'مشاريع ذات استهلاك ضعيف — ':'Projets à faible consommation — ')+year;
  host.innerHTML='<div class="detail-title"><div><b>'+esc(title)+'</b><small>'+items.length+' projet(s) · seuil ≤ '+threshold+' %</small></div><button class="detail-close" type="button">Fermer</button></div><div class="detail-items">'+(items.length?items.map(p=>{const rate=Number(p.updated_cost)>0?Number(p.consumed_credits||0)/Number(p.updated_cost)*100:0;return '<button data-open-project="'+p.id+'"><b>'+esc(p.project_code)+'</b> · '+esc(p.title)+'<small>'+statusLabel(p.operational_status)+' · '+pct(rate)+' · '+money(p.consumed_credits)+' / '+money(p.updated_cost)+'</small></button>';}).join(''):'<p class="muted">'+(currentLang==='ar'?'لا توجد مشاريع مطابقة لهذا المعيار.':'Aucun projet ne correspond à ce critère.')+'</p>')+'</div>';
  host.classList.remove('hidden');host.querySelector('.detail-close').onclick=()=>host.classList.add('hidden');
@@ -169,8 +169,8 @@ function renderTrend(rows=allProjects,root=document){
  const cats=[...new Set(rows.map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
  if(trendSelected===null)trendSelected=[...cats];
  if(!trendSelected.length&&cats.length)trendSelected=[...cats];
- if(root===document)root.querySelector('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+''+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+categoryColor(c,cats)+'"></i>'+esc(settingsLabel('project_category',c))+'</label>').join('');
- if(root===document){root.querySelectorAll('#trendCategoryFilter input').forEach(el=>el.addEventListener('change',()=>{trendSelected=[...root.querySelectorAll('#trendCategoryFilter input:checked')].map(x=>x.value);drawTrend(years,cats,rows,root);}));}
+ root.querySelector('#trendCategoryFilter').innerHTML=cats.map((c,i)=>'<label class="trend-option '+''+'"><input type="checkbox" value="'+esc(c)+'" '+(trendSelected.includes(c)?'checked':'')+'><i style="background:'+categoryColor(c,cats)+'"></i>'+esc(settingsLabel('project_category',c))+'</label>').join('');
+ {root.querySelectorAll('#trendCategoryFilter input').forEach(el=>el.addEventListener('change',()=>{trendSelected=[...root.querySelectorAll('#trendCategoryFilter input:checked')].map(x=>x.value);drawTrend(years,cats,rows,root);}));}
  drawTrend(years,cats,rows,root);
 }
 function drawTrend(years,cats,rows=allProjects,root=document){
@@ -185,14 +185,14 @@ function drawTrend(years,cats,rows=allProjects,root=document){
  const labels=years.map((y,i)=>'<text x="'+(l+(years.length===1?pw/2:i*pw/(years.length-1)))+'" y="'+(h-15)+'" text-anchor="middle" class="axis-label">'+y+'</text>').join('');
  const legend=series.map(s=>'<span><i style="background:'+categoryColor(s.category,cats)+'"></i>'+esc(settingsLabel('project_category',s.category))+'</span>').join('');
  root.querySelector('#allocationTrendChart').innerHTML='<div class="trend-legend">'+legend+'</div><div class="svg-scroll"><svg viewBox="0 0 '+w+' '+h+'" class="trend-svg">'+grid+lines+labels+'</svg></div>';
- if(root===document)root.querySelectorAll('#allocationTrendChart [data-trend-year]').forEach(el=>el.addEventListener('click',()=>showChartDetail('trend','trendCategory',el.dataset.trendYear,el.dataset.trendCategory)));
+ root.querySelectorAll('#allocationTrendChart [data-trend-year]').forEach(el=>el.addEventListener('click',()=>showChartDetail('trend','trendCategory',el.dataset.trendYear,el.dataset.trendCategory,root,rows)));
 }
-function showChartDetail(panel,key,value,label){
- let items=key==='trendCategory'?allProjects.filter(p=>p.category===label&&Number(p.initial_programming_year)===Number(value)):dashboardSubset;
+function showChartDetail(panel,key,value,label,root=document,rows=dashboardSubset){
+ let items=key==='trendCategory'?rows.filter(p=>p.category===label&&Number(p.initial_programming_year)===Number(value)):rows;
  if(key==='status')items=items.filter(p=>(p.operational_status||'not_started')===value);
  if(key==='funding')items=items.filter(p=>Number(p[value])>0);
  if(key==='category')items=items.filter(p=>p.category===value);
- const host=$('#'+(panel==='trend'?'trendDetail':panel==='category'?'categoryDetail':panel+'Detail'));
+ const host=root.querySelector('#'+(panel==='trend'?'trendDetail':panel==='category'?'categoryDetail':panel+'Detail'));
  if(!host)return;
  const title=key==='trendCategory'?label+' — '+value:label;
  host.innerHTML='<div class="detail-title"><div><b>'+esc(title)+'</b><small>'+items.length+' projet(s) · '+money(sum(items,'updated_cost'))+'</small></div><button class="detail-close" type="button">Fermer</button></div><div class="detail-items">'+(items.length?items.map(p=>'<button data-open-project="'+p.id+'"><b>'+esc(p.project_code)+'</b> · '+esc(p.title)+'<small>'+statusLabel(p.operational_status)+' · '+money(p.updated_cost)+'</small></button>').join(''):'<p class="muted">Aucun projet correspondant.</p>')+'</div>';
