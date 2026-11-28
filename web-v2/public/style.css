@@ -606,3 +606,6 @@ main{max-width:none;width:calc(100% - 248px);min-width:0}
 .reallocation-line .remove-line{height:38px}
 @media(max-width:1000px){.reallocation-layout{grid-template-columns:1fr}}
 @media(max-width:760px){.reallocation-kpis{grid-template-columns:1fr}.reallocation-line{grid-template-columns:1fr 1fr}.reallocation-line .remove-line{grid-column:1/-1}}
+
+body.rtl #projectsPage th:last-child,body.rtl #projectsPage td.project-actions{right:auto;left:0;box-shadow:5px 0 8px rgba(20,44,71,.06)}
+body.rtl .reallocation-line{direction:rtl}
