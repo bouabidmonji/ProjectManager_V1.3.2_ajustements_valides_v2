@@ -514,3 +514,52 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
  .meeting-mode .meeting-native-charts{grid-template-columns:minmax(0,1fr)}
  .meeting-mode .meeting-native-charts>article:nth-child(n){grid-column:1;grid-row:auto}
 }
+
+
+/* Correctif mode réunion — filtres réellement persistants et KPI interactifs */
+#meetingPage,
+#meetingPage .meeting-mode{
+  overflow:visible !important;
+}
+#meetingPage .meeting-mode .meeting-filters{
+  position:sticky !important;
+  top:0 !important;
+  z-index:1000 !important;
+  align-self:start;
+  isolation:isolate;
+  background:#fff !important;
+  box-shadow:0 6px 18px rgba(20,44,71,.16);
+  border:1px solid #cbd7e4;
+  margin-bottom:18px;
+}
+.meeting-mode .kpi-groups .kpi.meeting-kpi-interactive{
+  cursor:pointer !important;
+  outline-offset:3px;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.meeting-mode .kpi-groups .kpi.meeting-kpi-interactive:hover,
+.meeting-mode .kpi-groups .kpi.meeting-kpi-interactive:focus-visible{
+  transform:translateY(-2px);
+  border-color:#8eabc6;
+  box-shadow:0 7px 20px rgba(25,55,85,.14);
+}
+.meeting-mode .kpi-groups .kpi.meeting-kpi-interactive:focus-visible{
+  outline:2px solid #2676a5;
+}
+.meeting-mode .meeting-native-charts>article:nth-child(1),
+.meeting-mode .meeting-native-charts>article:nth-child(2),
+.meeting-mode .meeting-native-charts>article:nth-child(3){
+  grid-column:span 2;
+  grid-row:1;
+}
+.meeting-mode .meeting-native-charts>article:nth-child(4),
+.meeting-mode .meeting-native-charts>article:nth-child(5){
+  grid-column:span 3;
+  grid-row:2;
+}
+@media(max-width:760px){
+  .meeting-mode .meeting-native-charts>article:nth-child(n){
+    grid-column:1;
+    grid-row:auto;
+  }
+}
