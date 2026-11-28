@@ -112,16 +112,16 @@ function donutMarkup(items,total,label){
 function renderStatusChart(rows,root=document){
  const defs=currentLang==='ar'?[['لم ينطلقوا','not_started'],['في طور الإنجاز','in_progress'],['معطلون','blocked'],['منجزون','completed'],['ملغون','cancelled']]:[['Non démarrés','not_started'],['En cours','in_progress'],['Bloqués','blocked'],['Achevés','completed'],['Annulés','cancelled']];
  const items=defs.map(([label,key])=>{const a=rows.filter(p=>(p.operational_status||'not_started')===key);return {label,key:'status',valueKey:key,value:a.length,count:a.length,amount:sum(a,'updated_cost')};});
- root.querySelector('#statusChart').innerHTML=donutMarkup(items,rows.length,'État opérationnel');bindDonut('status',root);
+ root.querySelector('#statusChart').innerHTML=donutMarkup(items,rows.length,'État opérationnel');bindDonut('status',root,rows);
 }
 function renderFundingChart(rows,root=document){
  const defs=currentLang==='ar'?[['تمويل ذاتي','self_funding'],['قرض','loan'],['مساعدات استثنائية','exceptional_aid'],['مساعدات غير مخصصة','unassigned_aid'],['مساعدات مخصصة','assigned_aid'],['مصادر أخرى','other_funding']]:[['Autofinancement','self_funding'],['Emprunt','loan'],['Aides exceptionnelles','exceptional_aid'],['Aides non affectées','unassigned_aid'],['Aides affectées','assigned_aid'],['Autres sources','other_funding']];
  const items=defs.map(([label,key])=>{const a=rows.filter(p=>Number(p[key])>0);return {label,key:'funding',valueKey:key,value:sum(rows,key),count:a.length,amount:sum(rows,key)};}).filter(x=>x.value>0);
- root.querySelector('#fundingChart').innerHTML=donutMarkup(items,items.reduce((a,x)=>a+x.value,0),'Sources de financement');bindDonut('funding',root);
+ root.querySelector('#fundingChart').innerHTML=donutMarkup(items,items.reduce((a,x)=>a+x.value,0),'Sources de financement');bindDonut('funding',root,rows);
 }
-function bindDonut(panelKey,root=document){
+function bindDonut(panelKey,root=document,rows=dashboardSubset){
  const arcs=[...root.querySelectorAll('#'+panelKey+'Chart .donut-arc')];arcs.forEach((el,i)=>{const target=el.dataset.dash;el.style.transition='stroke-dasharray 1.25s cubic-bezier(.2,.8,.2,1) '+(i*.12)+'s';requestAnimationFrame(()=>el.setAttribute('stroke-dasharray',target));});
- root.querySelectorAll('#'+panelKey+'Chart [data-key]').forEach(el=>el.addEventListener('click',()=>showChartDetail(panelKey,el.dataset.key,el.dataset.value,el.dataset.label,root)));
+ root.querySelectorAll('#'+panelKey+'Chart [data-key]').forEach(el=>el.addEventListener('click',()=>showChartDetail(panelKey,el.dataset.key,el.dataset.value,el.dataset.label,root,rows)));
 }
 function renderCategoryChart(rows,root=document){
  const host=root.querySelector('#categoryChart');if(!host)return;
