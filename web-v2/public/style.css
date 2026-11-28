@@ -473,3 +473,11 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
   text-anchor:start;
   fill:#26384d;
 }
+
+
+/* Mode réunion : filtres persistants et interactions graphiques */
+.meeting-mode .meeting-filters{position:sticky;top:0;z-index:30;background:var(--surface,#fff);padding:12px 14px;margin:0 0 14px;border:1px solid var(--border,#dbe2ea);border-radius:10px;box-shadow:0 5px 16px #1b314514}
+.meeting-mode .meeting-native-charts{margin-top:14px}
+.meeting-native-charts .chart-detail{margin-top:12px}
+.meeting-native-charts .trend-point,.meeting-native-charts .donut-arc,.meeting-native-charts .annual-consumption-group,.meeting-native-charts .annual-rate-point,.meeting-native-charts .year-mark{cursor:pointer}
+.meeting-native-charts .chart-hint{font-size:11px;color:var(--muted,#64748b);margin:8px 0 0}
