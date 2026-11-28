@@ -481,3 +481,36 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
 .meeting-native-charts .chart-detail{margin-top:12px}
 .meeting-native-charts .trend-point,.meeting-native-charts .donut-arc,.meeting-native-charts .annual-consumption-group,.meeting-native-charts .annual-rate-point,.meeting-native-charts .year-mark{cursor:pointer}
 .meeting-native-charts .chart-hint{font-size:11px;color:var(--muted,#64748b);margin:8px 0 0}
+
+
+/* Mode réunion : même grille validée que le tableau de bord (3 panneaux puis 2) */
+.meeting-mode .meeting-native-charts{
+ display:grid;
+ grid-template-columns:repeat(6,minmax(0,1fr));
+ grid-auto-flow:row;
+ gap:14px;
+ align-items:stretch;
+}
+.meeting-mode .meeting-native-charts>article{
+ grid-column:span 2;
+ grid-row:1;
+ min-width:0;
+ width:100%;
+ max-width:100%;
+}
+.meeting-mode .meeting-native-charts>article:nth-child(4),
+.meeting-mode .meeting-native-charts>article:nth-child(5){
+ grid-column:span 3;
+ grid-row:2;
+}
+.meeting-mode .meeting-native-charts .donut-host,
+.meeting-mode .meeting-native-charts .chart-area,
+.meeting-mode .meeting-native-charts .trend-chart,
+.meeting-mode .meeting-native-charts .category-chart{
+ min-width:0;
+ max-width:100%;
+}
+@media(max-width:760px){
+ .meeting-mode .meeting-native-charts{grid-template-columns:minmax(0,1fr)}
+ .meeting-mode .meeting-native-charts>article:nth-child(n){grid-column:1;grid-row:auto}
+}
