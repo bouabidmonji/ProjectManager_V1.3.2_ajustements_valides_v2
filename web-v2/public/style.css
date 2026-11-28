@@ -521,16 +521,34 @@ body.rtl .form-message{margin-left:0;margin-right:10px}
 #meetingPage .meeting-mode{
   overflow:visible !important;
 }
-#meetingPage .meeting-mode .meeting-filters{
+#meetingPage .meeting-mode .meeting-sticky-header{
   position:sticky !important;
   top:0 !important;
   z-index:1000 !important;
-  align-self:start;
   isolation:isolate;
   background:#fff !important;
+  padding:14px 18px 10px;
+  margin:0 -18px 20px;
+  border-bottom:1px solid #cbd7e4;
   box-shadow:0 6px 18px rgba(20,44,71,.16);
-  border:1px solid #cbd7e4;
-  margin-bottom:18px;
+}
+#meetingPage .meeting-mode .meeting-sticky-header .pilotage-heading{
+  margin:0 0 10px !important;
+}
+#meetingPage .meeting-mode .meeting-sticky-header .pilotage-heading h2{
+  margin:4px 0 !important;
+}
+#meetingPage .meeting-mode .meeting-sticky-header .pilotage-heading p{
+  margin:0 !important;
+}
+#meetingPage .meeting-mode .meeting-sticky-header .meeting-filters{
+  position:static !important;
+  max-width:1050px;
+  margin:0 !important;
+  padding:0;
+  background:transparent !important;
+  box-shadow:none !important;
+  border:0 !important;
 }
 .meeting-mode .kpi-groups .kpi.meeting-kpi-interactive{
   cursor:pointer !important;
